@@ -1,0 +1,213 @@
+'use client';
+import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { Eye, EyeOff, GraduationCap, Mail, Lock, ArrowRight, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { loginCredentials } from '@/data/users';
+import patternBg from '@/assets/pattern-bg.jpg';
+
+type UserRole = 'student' | 'school' | 'govt' | 'admin';
+
+export default function LoginPage() {
+    const router = useRouter();
+    // Assuming 'superadmin' maps to 'admin' in UI but 'superadmin' in logic?
+    // In original file, tabs converted 'superadmin' to 'Admin' label.
+    // Let's stick to 'admin' for consistency with other files.
+    const [activeTab, setActiveTab] = useState<UserRole>('student');
+    const [showPassword, setShowPassword] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const tabs: { key: UserRole; label: string }[] = [
+        { key: 'student', label: 'Student' },
+        { key: 'school', label: 'School' },
+        { key: 'govt', label: 'Govt Org' },
+        { key: 'admin', label: 'Admin' }
+    ];
+
+    const handleLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        // Mock authentication
+        if (email && password) {
+            router.push(`/${activeTab}/dashboard`);
+        } else {
+            setError('Please enter your credentials');
+        }
+    };
+
+    const fillDemoCredentials = () => {
+        // Find credentials for the active role.
+        // Assuming loginCredentials exports array with role property.
+        // original code had role as 'student', 'school', 'govt', 'superadmin'.
+        // My activeTab uses 'admin'. 
+        const roleToFind = activeTab === 'admin' ? 'superadmin' : activeTab;
+        const creds = loginCredentials.find(c => c.role === roleToFind);
+        if (creds) {
+            setEmail(creds.email);
+            setPassword(creds.password);
+        }
+    };
+
+    return (
+        <div className="min-h-screen flex">
+            {/* Left Side - Form */}
+            <div className="flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-20 py-12 bg-background">
+                <div className="max-w-md mx-auto w-full">
+                    {/* Logo */}
+                    <Link href="/" className="flex items-center gap-2 mb-8">
+                        <div className="h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                            <GraduationCap className="w-6 h-6 text-primary-foreground" />
+                        </div>
+                        <span className="font-display text-xl font-bold text-foreground">
+                            Robo<span className="text-primary">Learn</span>
+                        </span>
+                    </Link>
+
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+                            Welcome Back!
+                        </h1>
+                        <p className="text-muted-foreground mb-8">
+                            Sign in to continue your learning journey
+                        </p>
+
+                        {/* Role Tabs */}
+                        <div className="flex gap-1 p-1 bg-muted rounded-xl mb-8">
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.key}
+                                    onClick={() => {
+                                        setActiveTab(tab.key);
+                                        setEmail('');
+                                        setPassword('');
+                                        setError('');
+                                    }}
+                                    className={`flex-1 py-2.5 px-3 text-sm font-medium rounded-lg transition-all
+                    ${activeTab === tab.key
+                                            ? 'bg-background text-foreground shadow-sm'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Demo Credentials Button */}
+                        <button
+                            type="button"
+                            onClick={fillDemoCredentials}
+                            className="w-full mb-4 py-2 text-sm text-primary hover:underline"
+                        >
+                            Click to fill demo credentials
+                        </button>
+
+                        {/* Login Form */}
+                        <form onSubmit={handleLogin} className="space-y-5">
+                            {error && (
+                                <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                                    {error}
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Email Address</label>
+                                <div className="relative">
+                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                    <input
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Enter your email"
+                                        className="w-full px-4 py-3 rounded-xl border bg-background pl-12 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-foreground mb-1.5">Password</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Enter your password"
+                                        className="w-full px-4 py-3 rounded-xl border bg-background pl-12 pr-12 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                                    >
+                                        {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input type="checkbox" className="w-4 h-4 rounded border-border" />
+                                    <span className="text-sm text-muted-foreground">Remember me</span>
+                                </label>
+                                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                                    Forgot password?
+                                </Link>
+                            </div>
+
+                            <Button type="submit" size="lg" className="w-full gap-2">
+                                Sign In
+                                <ArrowRight className="w-5 h-5" />
+                            </Button>
+                        </form>
+
+                        <p className="text-center text-muted-foreground mt-6">
+                            Don't have an account?{' '}
+                            <Link href="/signup" className="text-primary font-medium hover:underline">
+                                Sign Up
+                            </Link>
+                        </p>
+                    </motion.div>
+                </div>
+            </div>
+
+            {/* Right Side - Background */}
+            <div className="hidden lg:flex flex-1 relative bg-primary">
+                <img
+                    src={patternBg.src}
+                    alt=""
+                    className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-90" />
+                <div className="relative z-10 flex flex-col justify-center p-12 text-primary-foreground">
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                        Empowering the Next Generation of Innovators
+                    </h2>
+                    <p className="text-lg text-primary-foreground/80 mb-8">
+                        Join India's most comprehensive robotics and coding education platform
+                        designed for K-12 students.
+                    </p>
+                    <div className="space-y-4">
+                        {['15,000+ Students Trained', '120+ Partner Schools', 'CBSE & NEP 2020 Aligned'].map((item) => (
+                            <div key={item} className="flex items-center gap-3">
+                                <div className="w-6 h-6 rounded-full bg-primary-foreground/20 flex items-center justify-center">
+                                    <Check className="w-4 h-4" />
+                                </div>
+                                <span>{item}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
