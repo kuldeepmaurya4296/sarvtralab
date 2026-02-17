@@ -9,6 +9,8 @@ import { studentWatchTime } from '@/data/analytics';
 import { mockStudents } from '@/data/users';
 import { courses } from '@/data/courses';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export default function StudentDashboardPage() {
     // 1. Identify User (Simulating Auth)
@@ -40,6 +42,11 @@ export default function StudentDashboardPage() {
     const watchTime = "20.8 hrs";
     const quizScore = "85%";
     const overallProgress = "65%";
+
+    const handleDownload = (item: string) => {
+        toast.info(`Downloading ${item}...`);
+        setTimeout(() => toast.success("Download complete"), 1500);
+    };
 
     return (
         <DashboardLayout role="student" userName={student.name} userEmail={student.email}>
@@ -73,11 +80,13 @@ export default function StudentDashboardPage() {
                                         <p>Time Spent: {Math.floor(progressData.timeSpent / 60)} hours {progressData.timeSpent % 60} minutes</p>
                                         <p>Last Accessed: {progressData.lastAccessed}</p>
                                     </div>
-                                    <Link href={`/student/courses/${currentCourse.id}`}>
-                                        <button className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-xl font-medium transition-all hover:opacity-90">
-                                            <Play className="w-4 h-4" /> Continue Learning
-                                        </button>
-                                    </Link>
+                                    <div className="mt-4 flex gap-3">
+                                        <Link href={`/student/courses/${currentCourse.id}`}>
+                                            <Button className="gap-2">
+                                                <Play className="w-4 h-4" /> Continue Learning
+                                            </Button>
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
                         ) : (
@@ -98,7 +107,11 @@ export default function StudentDashboardPage() {
                     <h3 className="text-lg font-semibold mb-4">Recent Materials</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {currentCourse?.category === 'foundation' && ['Introduction to Robotics', 'Basic Electronics Guide'].map((item, i) => (
-                            <div key={i} className="flex items-center gap-3 p-4 rounded-xl border hover:bg-muted/50 transition-colors cursor-pointer">
+                            <div
+                                key={i}
+                                onClick={() => handleDownload(item)}
+                                className="flex items-center gap-3 p-4 rounded-xl border hover:bg-muted/50 transition-colors cursor-pointer"
+                            >
                                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                                     <FileText className="w-5 h-5 text-primary" />
                                 </div>

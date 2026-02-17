@@ -44,14 +44,12 @@ const roleMenuItems = {
     { icon: Users, label: 'Students', href: '/school/students' },
     { icon: BookOpen, label: 'Courses', href: '/school/courses' },
     { icon: FileText, label: 'Reports', href: '/school/reports' },
-    { icon: BarChart3, label: 'Analytics', href: '/school/analytics' },
     { icon: Settings, label: 'Settings', href: '/school/settings' }
   ],
   govt: [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/govt/dashboard' },
     { icon: Building, label: 'Schools', href: '/govt/schools' },
     { icon: Users, label: 'Students', href: '/govt/students' },
-    { icon: BarChart3, label: 'Analytics', href: '/govt/analytics' },
     { icon: FileText, label: 'Reports', href: '/govt/reports' },
     { icon: Settings, label: 'Settings', href: '/govt/settings' }
   ],
@@ -64,7 +62,6 @@ const roleMenuItems = {
     { icon: BookOpen, label: 'Courses', href: '/admin/courses' },
     { icon: FileText, label: 'Content', href: '/admin/content' },
     { icon: Shield, label: 'Govt Orgs', href: '/admin/govt' },
-    { icon: BarChart3, label: 'Analytics', href: '/admin/analytics' },
     { icon: Settings, label: 'Settings', href: '/admin/settings' }
   ]
 };

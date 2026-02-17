@@ -10,7 +10,11 @@ import {
     GraduationCap,
     MoreVertical,
     School as SchoolIcon,
-    BookOpen
+    BookOpen,
+    Eye,
+    Phone,
+    Mail,
+    FileText
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { mockGovtOrgs, mockSchools, mockStudents, Student } from '@/data/users';
@@ -48,6 +52,21 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+} from "@/components/ui/sheet";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
 
 export default function GovtStudentsPage() {
     // Assuming the first govt org is the logged-in user for now
@@ -66,6 +85,45 @@ export default function GovtStudentsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [gradeFilter, setGradeFilter] = useState('all');
     const [schoolFilter, setSchoolFilter] = useState('all');
+
+    // UI States
+    const [selectedStudent, setSelectedStudent] = useState<any>(null);
+    const [isViewOpen, setIsViewOpen] = useState(false);
+    const [isContactOpen, setIsContactOpen] = useState(false);
+
+    const handleExport = () => {
+        const headers = ['ID', 'Name', 'School', 'Grade', 'Parent Name', 'Parent Phone', 'Courses'];
+        const csvContent = [
+            headers.join(','),
+            ...myStudents.map(s => [
+                s.id,
+                `"${s.name}"`,
+                `"${s.schoolName}"`,
+                s.grade,
+                `"${s.parentName}"`,
+                s.parentPhone,
+                s.enrolledCourses.length
+            ].join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'govt-students-export.csv';
+        a.click();
+        toast.success("Exported student data");
+    };
+
+    const openView = (student: any) => {
+        setSelectedStudent(student);
+        setIsViewOpen(true);
+    };
+
+    const openContact = (student: any) => {
+        setSelectedStudent(student);
+        setIsContactOpen(true);
+    };
 
     // Filter logic
     const filteredStudents = myStudents.filter(student => {
@@ -94,7 +152,7 @@ export default function GovtStudentsPage() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" className="gap-2">
+                        <Button variant="outline" className="gap-2" onClick={handleExport}>
                             <Download className="h-4 w-4" />
                             Export Data
                         </Button>
@@ -235,9 +293,12 @@ export default function GovtStudentsPage() {
                                                                 Copy Student ID
                                                             </DropdownMenuItem>
                                                             <DropdownMenuSeparator />
-                                                            <DropdownMenuItem>View Academic Record</DropdownMenuItem>
-                                                            <DropdownMenuItem>Attendance Report</DropdownMenuItem>
-                                                            <DropdownMenuItem>Contact Parent</DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => openView(student)}>
+                                                                <Eye className="mr-2 h-4 w-4" /> View Academic Record
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem onClick={() => openContact(student)}>
+                                                                <Phone className="mr-2 h-4 w-4" /> Contact Parent
+                                                            </DropdownMenuItem>
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
                                                 </TableCell>
@@ -250,6 +311,111 @@ export default function GovtStudentsPage() {
                     </CardContent>
                 </Card>
             </div>
-        </DashboardLayout>
+
+
+            {/* View Student Sheet */}
+            <Sheet open={isViewOpen} onOpenChange={setIsViewOpen}>
+                <SheetContent>
+                    <SheetHeader>
+                        <SheetTitle>Student Academic Record</SheetTitle>
+                        <SheetDescription>
+                            Detailed performance and enrollment information.
+                        </SheetDescription>
+                    </SheetHeader>
+                    {selectedStudent && (
+                        <div className="mt-6 space-y-6">
+                            <div className="flex flex-col items-center gap-4">
+                                <Avatar className="h-20 w-20">
+                                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${selectedStudent.name}`} />
+                                    <AvatarFallback>{selectedStudent.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                                </Avatar>
+                                <div className="text-center">
+                                    <h3 className="text-lg font-semibold">{selectedStudent.name}</h3>
+                                    <p className="text-sm text-muted-foreground">{selectedStudent.schoolName} • {selectedStudent.grade}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground">Student ID</label>
+                                        <p className="text-sm font-medium">{selectedStudent.id}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground">Attendance</label>
+                                        <p className="text-sm font-medium text-green-600">92% (Excellent)</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground">Enrolled Courses</label>
+                                        <p className="text-sm font-medium">{selectedStudent.enrolledCourses.length}</p>
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-medium text-muted-foreground">Completed</label>
+                                        <p className="text-sm font-medium">{selectedStudent.completedCourses.length}</p>
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 border-t">
+                                    <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                                        <FileText className="h-4 w-4" /> Recent Performance
+                                    </h4>
+                                    <div className="space-y-3">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span>Mathematics</span>
+                                            <span className="font-bold text-green-600">A</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span>Science</span>
+                                            <span className="font-bold text-blue-600">B+</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span>English</span>
+                                            <span className="font-bold text-green-600">A-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </SheetContent>
+            </Sheet>
+
+            {/* Contact Parent Dialog */}
+            <Dialog open={isContactOpen} onOpenChange={setIsContactOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Contact Parent/Guardian</DialogTitle>
+                        <DialogDescription>
+                            Contact details for {selectedStudent?.name}'s parent.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedStudent && (
+                        <div className="space-y-4 py-4">
+                            <div className="flex items-center gap-3 p-3 border rounded-md">
+                                <User className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                    <p className="text-sm font-medium">Guardian Name</p>
+                                    <p className="text-sm text-muted-foreground">{selectedStudent.parentName}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 border rounded-md">
+                                <Phone className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                    <p className="text-sm font-medium">Phone Number</p>
+                                    <p className="text-sm text-muted-foreground">{selectedStudent.parentPhone}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 border rounded-md">
+                                <Mail className="h-5 w-5 text-muted-foreground" />
+                                <div>
+                                    <p className="text-sm font-medium">Email Address</p>
+                                    <p className="text-sm text-muted-foreground">{selectedStudent.parentEmail || 'N/A'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+        </DashboardLayout >
     );
 }

@@ -1,0 +1,95 @@
+{
+  "folders": [
+    {
+      "id": "root",
+      "name": "Home",
+      "parentId": null,
+      "path": "/",
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "fold-1771311418689",
+      "name": "abc",
+      "parentId": "root",
+      "path": "",
+      "createdAt": "2026-02-17T06:56:58.689Z"
+    },
+    {
+      "id": "fold-1771311431050",
+      "name": "sssss",
+      "parentId": "root",
+      "path": "",
+      "createdAt": "2026-02-17T06:57:11.050Z"
+    },
+    {
+      "id": "fold-1771311507367",
+      "name": "abc",
+      "parentId": "root",
+      "path": "",
+      "createdAt": "2026-02-17T06:58:27.367Z"
+    }
+  ],
+  "content": [
+    {
+      "id": "cnt-001",
+      "title": "Intro to Robotics Video",
+      "type": "Video",
+      "url": "https://www.youtube.com/embed/81rczD64n9I",
+      "folderId": "root",
+      "size": "450 MB",
+      "lastModified": "2024-05-10",
+      "status": "Published",
+      "courseIds": []
+    },
+    {
+      "id": "cnt-1771311394066",
+      "title": "ch1",
+      "type": "Video",
+      "url": "https://www.youtube.com/watch?v=4HRC6c5-2lQ&list=RD4HRC6c5-2lQ&start_radio=1",
+      "folderId": "root",
+      "size": "0 MB",
+      "courseIds": [
+        "intermediate-robotics-3m",
+        "intermediate-robotics-6m",
+        "advanced-robotics-3m"
+      ],
+      "description": "Uploaded via Admin Panel",
+      "lastModified": "2026-02-17",
+      "status": "Published"
+    },
+    {
+      "id": "cnt-1771311520566",
+      "title": "ss",
+      "type": "Video",
+      "url": "https://www.youtube.com/watch?v=4HRC6c5-2lQ&list=RD4HRC6c5-2lQ&start_radio=1",
+      "folderId": "fold-1771311431050",
+      "size": "0 MB",
+      "courseIds": [
+        "foundation-robotics-3m",
+        "intermediate-robotics-3m"
+      ],
+      "description": "Uploaded via Admin Panel",
+      "lastModified": "2026-02-17",
+      "status": "Published"
+    },
+    {
+      "id": "cnt-1771312150991",
+      "title": "fff",
+      "type": "Video",
+      "url": "https://www.youtube.com/watch?v=4HRC6c5-2lQ&list=RD4HRC6c5-2lQ&start_radio=1",
+      "folderId": "fold-1771311418689",
+      "size": "0 MB",
+      "courseIds": [
+        "foundation-robotics-3m",
+        "foundation-robotics-6m",
+        "intermediate-robotics-3m",
+        "intermediate-robotics-6m",
+        "advanced-robotics-3m",
+        "advanced-robotics-9m"
+      ],
+      "description": "Uploaded via Admin Panel",
+      "lastModified": "2026-02-17",
+      "status": "Published"
+    }
+  ]
+}
