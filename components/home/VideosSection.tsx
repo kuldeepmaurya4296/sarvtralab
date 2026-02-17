@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Eye } from 'lucide-react';
 import { showcaseVideos, Video } from '@/data/content';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 const VideosSection = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -113,6 +113,9 @@ const VideosSection = () => {
 
       <Dialog open={!!activeVideo} onOpenChange={(open) => !open && setActiveVideo(null)}>
         <DialogContent className="sm:max-w-4xl p-0 overflow-hidden bg-black border-none aspect-video">
+          <div className="sr-only">
+            <DialogTitle>{activeVideo?.title}</DialogTitle>
+          </div>
           {activeVideo && (
             <div className="w-full h-full bg-black">
               <iframe

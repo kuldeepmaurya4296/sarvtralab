@@ -20,7 +20,8 @@ import {
   Building,
   School,
   Shield,
-  Headphones
+  Headphones,
+  Award
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -35,6 +36,7 @@ const roleMenuItems = {
   student: [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/student/dashboard' },
     { icon: BookOpen, label: 'My Courses', href: '/student/courses' },
+    { icon: Award, label: 'Certificates', href: '/student/certificates' }, // Added Certificates
     { icon: FileText, label: 'Materials', href: '/student/materials' },
     { icon: Headphones, label: 'Support', href: '/student/support' },
     { icon: Settings, label: 'Settings', href: '/student/settings' }
@@ -60,6 +62,7 @@ const roleMenuItems = {
     { icon: GraduationCap, label: 'Teachers', href: '/admin/teachers' },
     { icon: Headphones, label: 'Help Support', href: '/admin/help-support' },
     { icon: BookOpen, label: 'Courses', href: '/admin/courses' },
+    { icon: Award, label: 'Certificates', href: '/admin/certificates' }, // Added Certificates
     { icon: FileText, label: 'Content', href: '/admin/content' },
     { icon: Shield, label: 'Govt Orgs', href: '/admin/govt' },
     { icon: Settings, label: 'Settings', href: '/admin/settings' }

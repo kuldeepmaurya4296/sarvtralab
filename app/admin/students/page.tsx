@@ -28,6 +28,8 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { mockSuperAdmin, mockStudents, mockSchools } from '@/data/users';
+import { mockIssuedCertificates } from '@/data/certificates';
+import { courses as mockCourses } from '@/data/courses';
 import {
     Table,
     TableBody,
@@ -456,9 +458,10 @@ export default function AdminStudentsPage() {
 
                                     <Tabs defaultValue="profile" className="w-full">
                                         <div className="px-6 pt-4">
-                                            <TabsList className="w-full grid grid-cols-2">
+                                            <TabsList className="w-full grid grid-cols-3">
                                                 <TabsTrigger value="profile">Profile Overview</TabsTrigger>
-                                                <TabsTrigger value="performance">Performance Report</TabsTrigger>
+                                                <TabsTrigger value="performance">Performance</TabsTrigger>
+                                                <TabsTrigger value="certificates">Certificates</TabsTrigger>
                                             </TabsList>
                                         </div>
 
@@ -686,6 +689,58 @@ export default function AdminStudentsPage() {
                                                 </Button>
                                             </div>
                                         </TabsContent>
+
+                                        {/* Certificates Tab */}
+                                        <TabsContent value="certificates" className="p-6 space-y-6 mt-0">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="font-semibold flex items-center gap-2 text-sm">
+                                                    <Award className="h-4 w-4 text-primary" />
+                                                    Achieved Certificates
+                                                </h4>
+                                            </div>
+
+                                            {mockIssuedCertificates.filter(c => c.studentId === selectedStudent.id).length > 0 ? (
+                                                <div className="grid grid-cols-1 gap-4">
+                                                    {mockIssuedCertificates.filter(c => c.studentId === selectedStudent.id).map((cert, idx) => {
+                                                        const course = mockCourses.find(c => c.id === cert.courseId);
+                                                        return (
+                                                            <div key={cert.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 rounded-xl border bg-card hover:shadow-md transition-shadow gap-4">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="h-12 w-12 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600">
+                                                                        <Award className="h-6 w-6" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <h5 className="font-bold text-sm">{course?.title || cert.courseId}</h5>
+                                                                        <div className="text-xs text-muted-foreground mt-0.5 flex gap-2">
+                                                                            <span>Issued: {cert.issueDate}</span>
+                                                                            <span>•</span>
+                                                                            <span className="font-mono">{cert.id}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex gap-2 w-full sm:w-auto">
+                                                                    {/* Placeholder for download - In real app this would link to the PDF generation logic */}
+                                                                    <Button variant="outline" size="sm" className="gap-2 w-full sm:w-auto">
+                                                                        <Download className="h-3.5 w-3.5" />
+                                                                        Download
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center py-12 text-center border rounded-xl border-dashed bg-muted/20">
+                                                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-3">
+                                                        <Award className="h-6 w-6 text-muted-foreground" />
+                                                    </div>
+                                                    <h3 className="font-medium">No Certificates Yet</h3>
+                                                    <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+                                                        This student hasn't earned any certificates yet. Complete courses to earn awards.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </TabsContent>
                                     </Tabs>
                                 </div>
                             )}
@@ -867,7 +922,7 @@ export default function AdminStudentsPage() {
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
-            </div>
-        </DashboardLayout>
+            </div >
+        </DashboardLayout >
     );
 }

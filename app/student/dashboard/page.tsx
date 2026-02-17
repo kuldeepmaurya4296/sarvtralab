@@ -1,6 +1,6 @@
 'use client';
 import { motion } from 'framer-motion';
-import { BookOpen, Clock, Trophy, Target, Play, FileText } from 'lucide-react';
+import { BookOpen, Clock, Trophy, Target, Play, FileText, Award } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import ProgressRing from '@/components/dashboard/ProgressRing';
@@ -8,6 +8,7 @@ import { ChartCard, BarChartComponent } from '@/components/dashboard/Charts';
 import { studentWatchTime } from '@/data/analytics';
 import { mockStudents } from '@/data/users';
 import { courses } from '@/data/courses';
+import { mockIssuedCertificates } from '@/data/certificates';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -38,9 +39,9 @@ export default function StudentDashboardPage() {
 
     // 4. Calculate Stats
     const totalEnrolled = student.enrolledCourses.length;
+    const certificatesCount = mockIssuedCertificates.filter(c => c.studentId === student.id).length;
     // Mock other stats
     const watchTime = "20.8 hrs";
-    const quizScore = "85%";
     const overallProgress = "65%";
 
     const handleDownload = (item: string) => {
@@ -61,7 +62,7 @@ export default function StudentDashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatCard icon={BookOpen} title="Enrolled Courses" value={totalEnrolled} color="primary" />
                     <StatCard icon={Clock} title="Watch Time" value={watchTime} change="+2.5 hrs" changeType="positive" color="secondary" />
-                    <StatCard icon={Trophy} title="Quiz Score" value={quizScore} color="success" />
+                    <StatCard icon={Award} title="Certificates" value={certificatesCount} color="success" />
                     <StatCard icon={Target} title="Overall Progress" value={overallProgress} change="+5%" changeType="positive" color="accent" />
                 </div>
 
