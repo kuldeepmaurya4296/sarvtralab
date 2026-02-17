@@ -82,18 +82,16 @@ const HeroSection = () => {
             className="flex flex-col sm:flex-row gap-4 mb-10"
           >
             <Link href="/courses">
-              <button className="btn-hero-primary">
+              <button className="btn-hero-primary group">
                 Explore Courses
-                <ArrowRight className="w-5 h-5" />
+                <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
               </button>
             </Link>
             <button
-              className="btn-hero-outline flex items-center gap-2"
+              className="btn-hero-outline group"
               onClick={() => document.getElementById('videos')?.scrollIntoView({ behavior: 'smooth' })}
             >
-              <div className="w-10 h-10 rounded-full bg-background/20 flex items-center justify-center">
-                <Play className="w-5 h-5 fill-current" />
-              </div>
+              <Play className="w-5 h-5 fill-current transition-transform group-hover:scale-110" />
               Watch Demo
             </button>
           </motion.div>
@@ -133,7 +131,7 @@ const HeroSection = () => {
       >
         <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-secondary/30 to-primary/30 backdrop-blur-xl border border-white/20" />
       </motion.div>
-    </section>
+    </section >
   );
 };
 
