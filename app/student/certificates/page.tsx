@@ -27,6 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { format } from 'date-fns';
 
 import { mockIssuedCertificates } from '@/data/certificates';
 
@@ -175,7 +176,7 @@ export default function StudentCertificatesPage() {
                                         <CardContent className="p-4">
                                             <div className="flex justify-between items-start mb-2">
                                                 <Badge variant="outline" className="font-mono text-xs">{cert.id}</Badge>
-                                                <span className="text-xs text-muted-foreground">{new Date(cert.issueDate).toLocaleDateString()}</span>
+                                                <span className="text-xs text-muted-foreground">{format(new Date(cert.issueDate), 'MMM d, yyyy')}</span>
                                             </div>
                                             <div className="space-y-1">
                                                 <p className="text-sm font-medium">Instructor: {cert.instructor}</p>

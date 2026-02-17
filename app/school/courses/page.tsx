@@ -50,11 +50,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
 
-// Mock data extension for demonstration if needed
-const extendedCourses = courses.map(c => ({
+// Mock data extension - using deterministic values to avoid hydration mismatches
+const extendedCourses = courses.map((c, i) => ({
     ...c,
-    progress: Math.floor(Math.random() * 100),
-    lastAccessed: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toLocaleDateString(),
+    progress: ((i * 37 + 13) % 100),  // deterministic pseudo-random based on index
+    lastAccessed: `${((i * 3 + 1) % 28) + 1} days ago`,
     modules: [
         { title: "Introduction to the Course", duration: "10 min", status: "completed" },
         { title: "Core Concepts - Part 1", duration: "45 min", status: "in-progress" },
@@ -281,8 +281,8 @@ export default function SchoolCoursesPage() {
                                                     <div key={idx} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors cursor-pointer group">
                                                         <div className="flex items-center gap-3">
                                                             <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold ${module.status === 'completed' ? 'bg-green-100 text-green-700' :
-                                                                    module.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
-                                                                        'bg-muted text-muted-foreground'
+                                                                module.status === 'in-progress' ? 'bg-blue-100 text-blue-700' :
+                                                                    'bg-muted text-muted-foreground'
                                                                 }`}>
                                                                 {module.status === 'completed' ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
                                                             </div>

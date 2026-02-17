@@ -17,6 +17,7 @@ import {
 import { materials, Material } from '@/data/materials';
 import { courses } from '@/data/courses';
 import { mockStudents } from '@/data/users';
+import { format } from 'date-fns';
 
 export default function StudentMaterialsPage() {
     // 1. Identify User (Simulating Auth)
@@ -157,7 +158,7 @@ export default function StudentMaterialsPage() {
                                 <div className="pt-4 border-t flex items-center justify-between mt-auto">
                                     <div className="text-xs text-muted-foreground">
                                         {material.size && <span>{material.size} • </span>}
-                                        <span>{new Date(material.uploadedAt).toLocaleDateString()}</span>
+                                        <span>{format(new Date(material.uploadedAt), 'MMM d, yyyy')}</span>
                                     </div>
                                     <Button size="sm" variant="outline" className="h-8 gap-1.5" asChild>
                                         <a href={material.downloadUrl} target="_blank" rel="noopener noreferrer">

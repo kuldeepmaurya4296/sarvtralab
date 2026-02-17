@@ -99,19 +99,7 @@ const TestimonialsSection = () => {
           </Carousel>
         </div>
 
-        {/* Success Image */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="rounded-2xl overflow-hidden shadow-2xl"
-        >
-          <img
-            src={studentsSuccess.src}
-            alt="Student Success Stories"
-            className="w-full h-auto"
-          />
-        </motion.div>
+
       </div>
     </section>
   );

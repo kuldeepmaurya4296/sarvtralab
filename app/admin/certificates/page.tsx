@@ -18,6 +18,7 @@ import {
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { mockSuperAdmin, mockStudents, mockSchools } from '@/data/users';
 import { mockIssuedCertificates } from '@/data/certificates';
+import { CertificateService } from '@/data/services/certificate.service';
 import { courses as mockCourses } from '@/data/courses';
 import { CertificateTemplate } from '@/components/admin/CertificateTemplate';
 import {
@@ -197,18 +198,17 @@ export default function AdminCertificatesPage() {
         const req = requests.find(r => r.id === reqId);
         if (!req) return;
 
-        const newCert = {
-            id: `CERT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+        const newCert = CertificateService.issue({
             studentId: req.studentId,
             courseId: req.courseId,
-            issueDate: new Date().toISOString().split('T')[0],
-            hash: Math.random().toString(36).substring(7),
-            downloadUrl: '#'
-        };
+            issueDate: new Date().toISOString().split('T')[0]
+        });
 
-        setCertificates([newCert, ...certificates]);
-        setRequests(requests.filter(r => r.id !== reqId));
-        toast.success(`Certificate issued for ${getStudent(req.studentId)?.name}`);
+        if (newCert) {
+            setCertificates([newCert, ...certificates]);
+            setRequests(requests.filter(r => r.id !== reqId));
+            toast.success(`Certificate issued for ${getStudent(req.studentId)?.name}`);
+        }
     };
 
     const handleReject = (reqId: string) => {
