@@ -191,7 +191,7 @@ export const courses: Course[] = [
           { id: 'im-2-1', title: 'Ultrasonic Sensors', duration: '90 min', type: 'video', videoUrl: 'https://www.youtube.com/embed/ZejQOX69K5M' },
           { id: 'im-2-2', title: 'IR and Line Sensors', duration: '90 min', type: 'video', videoUrl: 'https://www.youtube.com/embed/5I5j2z3d8r4' },
           { id: 'im-2-3', title: 'Temperature & Humidity', duration: '90 min', type: 'video', videoUrl: 'https://www.youtube.com/embed/c1v8t1v8X8g' },
-          { id: 'im-2-4', title: 'Obstacle Avoidance Robot', duration: '180 min', type: 'project', videoUrl: 'https://www.youtube.com/embed/5I5j2z3d8r4' }
+          { id: 'im-2-4', title: 'Obstacle Avoidance Robot', duration: '180 min', type: 'project', videoUrl: 'https://www.youtube.com/embed/_y0X5d_4-lU' }
         ]
       }
     ],
@@ -261,9 +261,9 @@ export const courses: Course[] = [
         duration: '12 Hours',
         lessons: [
           { id: 'ad-1-1', title: 'Introduction to ROS', duration: '90 min', type: 'video', videoUrl: 'https://www.youtube.com/embed/930c8R1r3a8' },
-          { id: 'ad-1-2', title: 'ROS Nodes and Topics', duration: '90 min', type: 'video', videoUrl: 'https://www.youtube.com/embed/0G6yT0A3u5U' },
-          { id: 'ad-1-3', title: 'ROS Services', duration: '90 min', type: 'video', videoUrl: 'https://www.youtube.com/embed/0G6yT0A3u5U' },
-          { id: 'ad-1-4', title: 'Building a ROS Robot', duration: '180 min', type: 'project', videoUrl: 'https://www.youtube.com/embed/0G6yT0A3u5U' }
+          { id: 'ad-1-2', title: 'ROS Nodes and Topics', duration: '90 min', type: 'video', videoUrl: 'https://www.youtube.com/embed/eB8-jQ2A57A' },
+          { id: 'ad-1-3', title: 'ROS Services', duration: '90 min', type: 'video', videoUrl: 'https://www.youtube.com/embed/yYmI-z-fXUo' },
+          { id: 'ad-1-4', title: 'Building a ROS Robot', duration: '180 min', type: 'project', videoUrl: 'https://www.youtube.com/embed/JmC-qT5f6kQ' }
         ]
       }
     ],

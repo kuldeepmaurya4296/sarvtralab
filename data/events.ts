@@ -54,7 +54,7 @@ export const events: Event[] = [
         presenter: 'Dr. Meera Gupta',
         image: '/placeholder.svg',
         location: 'Virtual',
-        videoUrl: 'https://www.youtube.com/embed/example', // Replace with valid ID if available
+        videoUrl: 'https://www.youtube.com/embed/rfscVS0vtbw', // Replaced with Python Programming (Coding Education)
         isPast: true
     },
     {
@@ -67,7 +67,7 @@ export const events: Event[] = [
         presenter: 'Rajesh Kumar',
         image: '/placeholder.svg',
         location: 'Virtual',
-        videoUrl: 'https://www.youtube.com/embed/example2',
+        videoUrl: 'https://www.youtube.com/embed/81rczD64n9I', // Replaced with What is a Robot (Intro for Parents)
         isPast: true
     }
 ];

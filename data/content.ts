@@ -81,7 +81,7 @@ export const showcaseVideos: Video[] = [
     duration: '6:48',
     views: 245000,
     category: 'Testimonial',
-    videoUrl: 'https://www.youtube.com/embed/f9e0w7g3X9k'
+    videoUrl: 'https://www.youtube.com/embed/Fe8wpM-As1o'
   },
   {
     id: 'vid-006',
@@ -91,7 +91,7 @@ export const showcaseVideos: Video[] = [
     duration: '18:30',
     views: 45000,
     category: 'School',
-    videoUrl: 'https://www.youtube.com/embed/xS6hJt9Wp9E'
+    videoUrl: 'https://www.youtube.com/embed/JmC-qT5f6kQ'
   }
 ];
 

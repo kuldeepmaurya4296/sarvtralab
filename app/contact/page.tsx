@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Clock, MessageSquare, CheckCircle } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, MessageSquare, CheckCircle, Send } from 'lucide-react';
 import PublicLayout from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
