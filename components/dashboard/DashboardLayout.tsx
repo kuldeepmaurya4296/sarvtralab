@@ -36,7 +36,6 @@ const roleMenuItems = {
     { icon: LayoutDashboard, label: 'Dashboard', href: '/student/dashboard' },
     { icon: BookOpen, label: 'My Courses', href: '/student/courses' },
     { icon: FileText, label: 'Materials', href: '/student/materials' },
-    { icon: BarChart3, label: 'Progress', href: '/student/progress' },
     { icon: Headphones, label: 'Support', href: '/student/support' },
     { icon: Settings, label: 'Settings', href: '/student/settings' }
   ],
@@ -101,9 +100,8 @@ const DashboardLayout = ({ children, role, userName, userEmail }: DashboardLayou
     <div className="min-h-screen bg-background flex">
       {/* Sidebar - Desktop */}
       <aside
-        className={`hidden lg:flex flex-col fixed left-0 top-0 h-full bg-sidebar text-sidebar-foreground z-40 transition-all duration-300 ${
-          sidebarOpen ? 'w-64' : 'w-20'
-        }`}
+        className={`hidden lg:flex flex-col fixed left-0 top-0 h-full bg-sidebar text-sidebar-foreground z-40 transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'
+          }`}
       >
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
