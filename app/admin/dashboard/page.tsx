@@ -1,32 +1,47 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Users, School, IndianRupee, TrendingUp, Building } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import FilterTabs from '@/components/dashboard/FilterTabs';
 import { ChartCard, LineChartComponent, PieChartComponent, MultiBarChartComponent } from '@/components/dashboard/Charts';
+import { db } from '@/data/services/database';
 import { weeklyData, monthlyData, yearlyData, courseEnrollment } from '@/data/analytics';
-import { mockSuperAdmin, mockSchools, mockStudents } from '@/data/users';
-import { courses } from '@/data/courses';
+import { SuperAdmin } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function AdminDashboardPage() {
-    const admin = mockSuperAdmin;
+    const { user, isLoading } = useAuth();
+    const router = useRouter();
     const [period, setPeriod] = useState('Monthly');
 
+    useEffect(() => {
+        if (!isLoading && (!user || user.role !== 'superadmin')) {
+            router.push('/login');
+        }
+    }, [user, isLoading, router]);
+
+    if (isLoading) return <div>Loading...</div>;
+    if (!user || user.role !== 'superadmin') return null;
+
+    const admin = user as SuperAdmin;
+
     // Dynamic Calculations
-    const totalStudents = mockStudents.length;
-    const totalSchools = mockSchools.length;
-    // Mock revenue calc (e.g. sum of all enrolled courses * price) -- simplified
-    const totalRevenue = mockStudents.reduce((acc, student) => {
-        // Find enrolled courses and sum their price
+    const totalStudents = db.students.count();
+    const totalSchools = db.schools.count();
+    // Revenue calc using DB service
+    // Get all students to calculate revenue
+    const allStudents = db.students.find();
+    const totalRevenue = allStudents.reduce((acc, student) => {
         const studentRevenue = student.enrolledCourses.reduce((courseAcc, cId) => {
-            const course = courses.find(c => c.id === cId);
+            const course = db.courses.findById(cId);
             return courseAcc + (course ? course.price : 0);
         }, 0);
         return acc + studentRevenue;
     }, 0);
 
-    const completionRate = "78.5"; // Keeping static as calculating "rate" requires more history
+    const completionRate = "78.5"; // Keeping static
 
     const getData = () => {
         switch (period) {
@@ -37,9 +52,9 @@ export default function AdminDashboardPage() {
     };
 
     const pieData = [
-        { name: 'Foundation', value: courses.filter(c => c.category === 'foundation').length },
-        { name: 'Intermediate', value: courses.filter(c => c.category === 'intermediate').length },
-        { name: 'Advanced', value: courses.filter(c => c.category === 'advanced').length }
+        { name: 'Foundation', value: db.courses.count(c => c.category === 'foundation') },
+        { name: 'Intermediate', value: db.courses.count(c => c.category === 'intermediate') },
+        { name: 'Advanced', value: db.courses.count(c => c.category === 'advanced') }
     ];
 
     return (
@@ -80,7 +95,7 @@ export default function AdminDashboardPage() {
                     <div className="p-6 rounded-2xl bg-card border shadow-sm h-full overflow-hidden flex flex-col">
                         <h3 className="text-lg font-semibold mb-4">Recent Schools</h3>
                         <div className="space-y-3 flex-1 overflow-y-auto pr-2">
-                            {mockSchools.slice(0, 5).map((school) => (
+                            {db.schools.find({}, { limit: 5 }).map((school) => (
                                 <div key={school.id} className="flex items-center gap-4 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <Building className="w-5 h-5 text-primary" />

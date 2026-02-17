@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff, GraduationCap, Mail, Lock, ArrowRight, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { loginCredentials } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
 import patternBg from '@/assets/pattern-bg.jpg';
 
 type UserRole = 'student' | 'school' | 'govt' | 'admin';
@@ -28,23 +29,10 @@ export default function LoginPage() {
         { key: 'admin', label: 'Admin' }
     ];
 
-    const handleLogin = (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
+    const { login } = useAuth();
 
-        // Mock authentication
-        if (email && password) {
-            router.push(`/${activeTab}/dashboard`);
-        } else {
-            setError('Please enter your credentials');
-        }
-    };
-
+    // Handle demo credentials fill
     const fillDemoCredentials = () => {
-        // Find credentials for the active role.
-        // Assuming loginCredentials exports array with role property.
-        // original code had role as 'student', 'school', 'govt', 'superadmin'.
-        // My activeTab uses 'admin'. 
         const roleToFind = activeTab === 'admin' ? 'superadmin' : activeTab;
         const creds = loginCredentials.find(c => c.role === roleToFind);
         if (creds) {
@@ -52,6 +40,23 @@ export default function LoginPage() {
             setPassword(creds.password);
         }
     };
+
+    const handleLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        if (!email || !password) {
+            setError('Please enter your credentials');
+            return;
+        }
+
+        const success = await login(email, password);
+        if (!success) {
+            setError('Invalid email or password');
+        }
+    };
+
+    // Simplified credentials logic handled above
 
     return (
         <div className="min-h-screen flex">

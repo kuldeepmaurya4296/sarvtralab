@@ -1,16 +1,31 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Building, Users, TrendingUp, FileText } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import FilterTabs from '@/components/dashboard/FilterTabs';
 import { ChartCard, AreaChartComponent, BarChartComponent } from '@/components/dashboard/Charts';
 import { monthlyData, gradeDistribution } from '@/data/analytics';
-import { mockGovtOrgs, mockSchools } from '@/data/users';
+import { db } from '@/data/services/database';
+import { GovtOrg } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function GovtDashboardPage() {
-    const govtOrg = mockGovtOrgs[0];
+    const { user, isLoading } = useAuth();
+    const router = useRouter();
     const [period, setPeriod] = useState('Monthly');
+
+    useEffect(() => {
+        if (!isLoading && (!user || user.role !== 'govt')) {
+            router.push('/login');
+        }
+    }, [user, isLoading, router]);
+
+    if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!user || user.role !== 'govt') return null;
+
+    const govtOrg = user as GovtOrg;
 
     return (
         <DashboardLayout role="govt" userName={govtOrg.name} userEmail={govtOrg.email}>
@@ -24,7 +39,7 @@ export default function GovtDashboardPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard icon={Building} title="Schools Under Jurisdiction" value={mockSchools.length} color="primary" />
+                    <StatCard icon={Building} title="Schools Under Jurisdiction" value={db.schools.count()} color="primary" />
                     <StatCard icon={Users} title="Total Students" value="5,500" change="+320" changeType="positive" color="secondary" />
                     <StatCard icon={TrendingUp} title="Avg Completion Rate" value="72%" color="success" />
                     <StatCard icon={FileText} title="Reports Generated" value={24} color="accent" />
@@ -47,7 +62,7 @@ export default function GovtDashboardPage() {
                                 <th className="pb-3 px-2">School Name</th><th className="pb-3 px-2">City</th><th className="pb-3 px-2">Students</th><th className="pb-3 px-2">Status</th>
                             </tr></thead>
                             <tbody>
-                                {mockSchools.map((school) => (
+                                {db.schools.find().map((school) => (
                                     <tr key={school.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
                                         <td className="py-3 px-2 font-medium">{school.name}</td>
                                         <td className="py-3 px-2 text-muted-foreground">{school.city}</td>
@@ -63,4 +78,3 @@ export default function GovtDashboardPage() {
         </DashboardLayout>
     );
 }
-

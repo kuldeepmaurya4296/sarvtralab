@@ -1,22 +1,37 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Users, BookOpen, Award } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import FilterTabs from '@/components/dashboard/FilterTabs';
 import { ChartCard, AreaChartComponent, MultiBarChartComponent } from '@/components/dashboard/Charts';
-import { weeklyData, courseEnrollment } from '@/data/analytics'; // Keep charts staticish for now as generating time-series from flat data is complex
-import { mockSchools, mockStudents } from '@/data/users';
+import { weeklyData, courseEnrollment } from '@/data/analytics';
+import { db } from '@/data/services/database';
+import { School } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 export default function SchoolDashboardPage() {
     // 1. Identify School (Simulating Auth)
-    const school = mockSchools[0]; // DPS Noida
+    const { user, isLoading } = useAuth();
+    const router = useRouter();
     const [period, setPeriod] = useState('Weekly');
+
+    useEffect(() => {
+        if (!isLoading && (!user || user.role !== 'school')) {
+            router.push('/login');
+        }
+    }, [user, isLoading, router]);
+
+    if (isLoading) return <div>Loading...</div>;
+    if (!user || user.role !== 'school') return null;
+
+    const school = user as School;
 
     // 2. Dynamic Calcs
     const schoolStudents = useMemo(() =>
-        mockStudents.filter(s => s.schoolId === school.id),
+        db.students.find(s => s.schoolId === school.id),
         [school.id]);
 
     const totalStudents = schoolStudents.length;

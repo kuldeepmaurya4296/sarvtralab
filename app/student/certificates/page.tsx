@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
     Award,
     Search,
@@ -9,11 +9,10 @@ import {
     FileCheck,
     AlertCircle,
     CheckCircle2,
-    BookOpen
+    BookOpen,
+    Loader2
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockStudents } from '@/data/users';
-import { courses as mockCourses } from '@/data/courses';
 import {
     Card,
     CardContent,
@@ -26,68 +25,127 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { format } from 'date-fns';
+// @ts-ignore
+import html2canvas from 'html2canvas';
+// @ts-ignore
+import { jsPDF } from 'jspdf';
 
-import { mockIssuedCertificates } from '@/data/certificates';
-
-// Mock Data
-// Assuming logged in student is mockStudents[0]
-const currentStudent = mockStudents[0];
-
-const myCertificates = mockIssuedCertificates
-    .filter(cert => cert.studentId === currentStudent.id)
-    .map(cert => {
-        const course = mockCourses.find(c => c.id === cert.courseId);
-        return {
-            id: cert.id,
-            courseId: cert.courseId,
-            issueDate: cert.issueDate,
-            title: course?.title || 'Unknown Course',
-            instructor: course?.instructor || 'LMS Instructor',
-            grade: 'A', // Mock grade as it's not in the certificate data model yet
-            downloadUrl: '#'
-        };
-    });
-
-const eligibleCourses = [
-    {
-        courseId: 'course-1',
-        title: 'Introduction to R',
-        progress: 100,
-        status: 'pending_request' // Assume user already requested
-    },
-    {
-        courseId: 'course-2',
-        title: 'Advanced Machine Learning',
-        progress: 82,
-        status: 'eligible' // User can apply
-    },
-    {
-        courseId: 'course-4',
-        title: 'Web Development Bootcamp',
-        progress: 45,
-        status: 'in_progress' // Not eligible
-    }
-];
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { db } from '@/data/services/database';
+import { Student } from '@/data/users';
+import { CertificateTemplate } from '@/components/admin/CertificateTemplate';
 
 export default function StudentCertificatesPage() {
-    const student = currentStudent;
-    const [certificates, setCertificates] = useState(myCertificates);
-    const [courses, setCourses] = useState(eligibleCourses);
+    const { user, isLoading: authLoading } = useAuth();
+    const router = useRouter();
+    const [certificates, setCertificates] = useState<any[]>([]);
+    const [eligibleCourses, setEligibleCourses] = useState<any[]>([]);
+    const [selectedCert, setSelectedCert] = useState<any>(null);
+    const [isGenerating, setIsGenerating] = useState(false);
+
+    // Ref for the certificate to download
+    const downloadRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!authLoading && (!user || user.role !== 'student')) {
+            router.push('/login');
+        } else if (user && user.role === 'student') {
+            loadData(user as Student);
+        }
+    }, [user, authLoading, router]);
+
+    const loadData = (student: Student) => {
+        // Fetch certificates
+        const studentCerts = db.certificates.find(c => c.studentId === student.id).map(cert => {
+            const course = db.courses.findById(cert.courseId);
+            return {
+                ...cert,
+                courseName: course?.title || 'Unknown Course',
+                instructor: course?.instructor || 'Sarvtra Instructor',
+                studentName: student.name
+            };
+        });
+        setCertificates(studentCerts);
+
+        // Fetch courses for eligibility (Mock logic based on enrollment)
+        // In a real app, this would check progress/grades
+        const courses = student.enrolledCourses.map(courseId => {
+            const course = db.courses.findById(courseId);
+            // Mock status
+            const status = studentCerts.find(c => c.courseId === courseId)
+                ? 'earned'
+                : Math.random() > 0.5 ? 'eligible' : 'in_progress';
+
+            return {
+                courseId,
+                title: course?.title,
+                progress: status === 'earned' ? 100 : Math.floor(Math.random() * 90) + 10,
+                status // 'earned', 'eligible', 'in_progress', 'pending_request'
+            };
+        }).filter(c => c.status !== 'earned'); // Only show non-earned in eligibility tab
+
+        setEligibleCourses(courses);
+    };
 
     const handleApply = (courseId: string) => {
-        // Simulate application
-        setCourses(courses.map(c =>
+        // Mock application
+        setEligibleCourses(eligibleCourses.map(c =>
             c.courseId === courseId ? { ...c, status: 'pending_request' } : c
         ));
         toast.success("Certificate request submitted successfully!");
     };
 
-    const handleDownload = (certId: string) => {
-        toast.info("Downloading certificate...");
-        // Mock download logic
+    const handleDownload = async (cert: any) => {
+        setIsGenerating(true);
+        toast.info("Generating PDF...");
+
+        // We need to render the certificate in a hidden container or rely on the visible one if possible.
+        // But the visible one in the list is scaled down. 
+        // We will maintain a hidden div that renders the *selected* cert for download purposes.
+        setSelectedCert(cert);
+
+        // Wait for state update and render
+        setTimeout(async () => {
+            if (downloadRef.current) {
+                try {
+                    const canvas = await html2canvas(downloadRef.current, {
+                        scale: 2, // Higher quality
+                        useCORS: true,
+                        logging: false,
+                        backgroundColor: '#ffffff'
+                    });
+
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'px',
+                        format: [canvas.width, canvas.height] // Match canvas dimensions exactly for best quality
+                    });
+
+                    pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                    pdf.save(`${cert.courseName.replace(/\s+/g, '_')}_Certificate.pdf`);
+                    toast.success("Download complete");
+                } catch (error) {
+                    console.error("PDF Generation Error:", error);
+                    toast.error("Failed to generate PDF");
+                } finally {
+                    setIsGenerating(false);
+                    setSelectedCert(null); // Reset
+                }
+            } else {
+                setIsGenerating(false);
+                toast.error("Template not found");
+            }
+        }, 500); // Small delay to ensure render
     };
+
+    if (authLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!user || user.role !== 'student') return null;
+
+    const student = user as Student;
 
     return (
         <DashboardLayout role="student" userName={student.name} userEmail={student.email}>
@@ -120,7 +178,7 @@ export default function StudentCertificatesPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold">
-                                {courses.filter(c => c.status === 'pending_request').length}
+                                {eligibleCourses.filter(c => c.status === 'pending_request').length}
                             </div>
                             <p className="text-xs text-muted-foreground">Applications in review</p>
                         </CardContent>
@@ -131,9 +189,9 @@ export default function StudentCertificatesPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="text-3xl font-bold">
-                                {courses.filter(c => c.status === 'eligible').length}
+                                {eligibleCourses.filter(c => c.status === 'eligible').length}
                             </div>
-                            <p className="text-xs text-muted-foreground">Courses &gt; 75% complete</p>
+                            <p className="text-xs text-muted-foreground">Courses &gt; 90% complete</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -154,39 +212,64 @@ export default function StudentCertificatesPage() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {certificates.map((cert) => (
-                                    <Card key={cert.id} className="overflow-hidden hover:shadow-md transition-shadow">
-                                        <div className="h-40 bg-muted flex items-center justify-center relative group">
-                                            {/* Mock Certificate Preview */}
-                                            <div className="absolute inset-0 bg-primary/5 flex flex-col items-center justify-center p-4 border-b">
-                                                <Award className="h-12 w-12 text-primary mb-2" />
-                                                <span className="font-serif font-bold text-lg text-center tracking-wide">{cert.title}</span>
-                                                <span className="text-xs mt-1 text-muted-foreground uppercase tracking-wider">Certificate of Completion</span>
+                                    <Dialog key={cert.id}>
+                                        <Card className="overflow-hidden hover:shadow-md transition-shadow group">
+                                            {/* Preview Area - Scaled Down Template */}
+                                            <div className="h-48 bg-muted relative overflow-hidden flex items-center justify-center">
+                                                <div className="transform scale-[0.25] origin-center shadow-sm select-none pointer-events-none">
+                                                    <CertificateTemplate
+                                                        studentName={cert.studentName}
+                                                        courseName={cert.courseName}
+                                                        date={format(new Date(cert.issueDate), 'MMMM d, yyyy')}
+                                                        certificateId={cert.id}
+                                                        instructorName={cert.instructor}
+                                                    />
+                                                </div>
+
+                                                {/* Overlay */}
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                                    <Button size="sm" variant="secondary" onClick={(e) => { e.stopPropagation(); handleDownload(cert); }} disabled={isGenerating}>
+                                                        {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 mr-1" />} PDF
+                                                    </Button>
+                                                    <DialogTrigger asChild>
+                                                        <Button size="sm" variant="secondary">
+                                                            <Eye className="h-4 w-4 mr-1" /> View
+                                                        </Button>
+                                                    </DialogTrigger>
+                                                </div>
                                             </div>
 
-                                            {/* Overlay Actions */}
-                                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                                <Button size="sm" variant="secondary" onClick={() => handleDownload(cert.id)}>
-                                                    <Download className="h-4 w-4 mr-1" /> PDF
+                                            <CardContent className="p-4">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <Badge variant="outline" className="font-mono text-xs">{cert.id}</Badge>
+                                                    <span className="text-xs text-muted-foreground">{format(new Date(cert.issueDate), 'MMM d, yyyy')}</span>
+                                                </div>
+                                                <div className="space-y-1">
+                                                    <h3 className="font-semibold line-clamp-1" title={cert.courseName}>{cert.courseName}</h3>
+                                                    <p className="text-xs text-muted-foreground">Instructor: {cert.instructor}</p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+
+                                        {/* Full Size View Modal */}
+                                        <DialogContent className="max-w-[1200px] w-full overflow-auto max-h-[90vh] bg-muted/50 p-6 flex flex-col items-center">
+                                            <div className="bg-white shadow-2xl scale-[0.8] md:scale-100 origin-top">
+                                                <CertificateTemplate
+                                                    studentName={cert.studentName}
+                                                    courseName={cert.courseName}
+                                                    date={format(new Date(cert.issueDate), 'MMMM d, yyyy')}
+                                                    certificateId={cert.id}
+                                                    instructorName={cert.instructor}
+                                                />
+                                            </div>
+                                            <div className="mt-4 flex gap-4">
+                                                <Button onClick={() => handleDownload(cert)} disabled={isGenerating}>
+                                                    {isGenerating ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                                                    Download PDF
                                                 </Button>
-                                                <Button size="sm" variant="secondary">
-                                                    <Eye className="h-4 w-4 mr-1" /> View
-                                                </Button>
                                             </div>
-                                        </div>
-                                        <CardContent className="p-4">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <Badge variant="outline" className="font-mono text-xs">{cert.id}</Badge>
-                                                <span className="text-xs text-muted-foreground">{format(new Date(cert.issueDate), 'MMM d, yyyy')}</span>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <p className="text-sm font-medium">Instructor: {cert.instructor}</p>
-                                                <p className="text-xs text-muted-foreground">Grade Achieved: <span className="font-bold text-primary">{cert.grade}</span></p>
-                                            </div>
-                                            <Button className="w-full mt-4" variant="outline" size="sm" onClick={() => handleDownload(cert.id)}>
-                                                <Download className="h-4 w-4 mr-2" /> Download Certificate
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
+                                        </DialogContent>
+                                    </Dialog>
                                 ))}
                             </div>
                         )}
@@ -194,8 +277,8 @@ export default function StudentCertificatesPage() {
 
                     <TabsContent value="eligible" className="space-y-4 mt-6">
                         <div className="rounded-md border bg-card">
-                            {courses.map((course, idx) => (
-                                <div key={course.courseId} className={`flex flex-col md:flex-row md:items-center justify-between p-4 gap-4 ${idx !== courses.length - 1 ? 'border-b' : ''}`}>
+                            {eligibleCourses.length > 0 ? eligibleCourses.map((course, idx) => (
+                                <div key={course.courseId} className={`flex flex-col md:flex-row md:items-center justify-between p-4 gap-4 ${idx !== eligibleCourses.length - 1 ? 'border-b' : ''}`}>
                                     <div className="flex items-center gap-4 flex-1">
                                         <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center text-primary">
                                             <BookOpen className="h-5 w-5" />
@@ -213,7 +296,7 @@ export default function StudentCertificatesPage() {
                                                 <span className="font-medium">{course.progress}%</span>
                                             </div>
                                             <Progress value={course.progress} className="h-2" />
-                                            <span className="text-[10px] text-muted-foreground">75% required for certificate</span>
+                                            <span className="text-[10px] text-muted-foreground">90% required for certificate</span>
                                         </div>
 
                                         <div className="w-32 flex justify-end">
@@ -235,10 +318,25 @@ export default function StudentCertificatesPage() {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                            )) : <div className="p-8 text-center text-muted-foreground">No pending or eligible courses found.</div>}
                         </div>
                     </TabsContent>
                 </Tabs>
+
+                {/* Hidden Container for Downloading */}
+                <div className="absolute top-[-9999px] left-[-9999px] pointer-events-none opacity-0">
+                    {selectedCert && (
+                        <div ref={downloadRef}>
+                            <CertificateTemplate
+                                studentName={selectedCert.studentName}
+                                courseName={selectedCert.courseName}
+                                date={format(new Date(selectedCert.issueDate), 'MMMM d, yyyy')}
+                                certificateId={selectedCert.id}
+                                instructorName={selectedCert.instructor}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
         </DashboardLayout>
     );

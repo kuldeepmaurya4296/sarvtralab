@@ -86,7 +86,7 @@ export function StudentViewSheet({ student, open, onOpenChange, onEdit, onDelete
                             </TabsContent>
 
                             <TabsContent value="certificates" className="p-6 space-y-6 mt-0">
-                                <StudentCertificatesTab studentId={student.id} />
+                                <StudentCertificatesTab student={student} />
                             </TabsContent>
                         </Tabs>
                     </div>

@@ -69,6 +69,7 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
+import { format } from 'date-fns';
 // @ts-ignore
 import JSZip from 'jszip';
 // @ts-ignore
@@ -247,85 +248,49 @@ export default function AdminCertificatesPage() {
         setPreviewCertificate(cert);
     };
 
-    const handleDownloadCertificate = (cert: any) => {
-        // Open preview first, usually easier to print from there or creating a hidden print trigger
-        // Ideally for production, we generate a PDF blob. Here we simulate "Print to PDF".
-        const studentName = getStudent(cert.studentId)?.name || 'Student';
-        const courseName = getCourse(cert.courseId)?.title || 'Course';
+    const [isDownloadingSingle, setIsDownloadingSingle] = useState(false);
 
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-            printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>Certificate - ${studentName}</title>
-                        <script src="https://cdn.tailwindcss.com"></script>
-                        <style>
-                            @import url('https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cinzel:wght@400;700&display=swap');
-                            body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f3f4f6; }
-                            .font-script { font-family: 'Great Vibes', cursive; }
-                            .font-serif { font-family: 'Cinzel', serif; }
-                            @media print {
-                                body { background: white; -webkit-print-color-adjust: exact; }
-                                .no-print { display: none; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                         <div id="cert-container" class="w-[1000px] h-[750px] bg-white text-black p-12 relative border-[24px] border-double border-slate-800 flex flex-col items-center justify-center text-center shadow-none mx-auto">
-                            <!-- Background Watermark -->
-                            <div class="absolute inset-0 opacity-5 flex items-center justify-center pointer-events-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-900"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-                            </div>
+    const handleDownloadCertificate = async (cert: any) => {
+        if (isDownloadingSingle || isGeneratingZip) return;
 
-                            <!-- Header -->
-                            <div class="mb-10">
-                                <h1 class="text-6xl font-bold text-slate-900 uppercase tracking-[0.2em] mb-4 font-serif">Certificate</h1>
-                                <h2 class="text-3xl font-normal text-slate-600 uppercase tracking-[0.2em] font-serif">of Completion</h2>
-                            </div>
+        setIsDownloadingSingle(true);
+        toast.info("Preparing certificate download...");
 
-                            <div class="mb-12 w-full px-20">
-                                <p class="text-xl italic text-slate-500 mb-4 font-serif">This is to certify that</p>
-                                <h3 class="text-6xl font-normal text-slate-800 border-b-2 border-slate-300 pb-4 mb-6 font-script">
-                                    ${studentName}
-                                </h3>
-                                <p class="text-xl italic text-slate-500 mb-4 font-serif">has successfully completed the course</p>
-                                <h4 class="text-4xl font-bold text-slate-800 mb-8 font-serif leading-tight">${courseName}</h4>
-                                <p class="text-lg text-slate-600 max-w-3xl mx-auto leading-relaxed font-serif">
-                                    Demonstrating exceptional dedication and mastery of the subject matter, fulfilling all academic and project requirements set forth by Sarvtra Lab.
-                                </p>
-                            </div>
+        // Use the same mechanism as bulk download: render into the hidden container
+        setCurrentGeneratingCert(cert);
 
-                            <!-- Footer / Signatures -->
-                            <div class="w-full flex justify-between items-end px-20 mt-16">
-                                <div class="text-center w-64">
-                                     <div class="font-script text-3xl mb-1 text-slate-800">Dr. Anil Mehta</div>
-                                    <div class="border-t-2 border-slate-800 mb-2 w-full"></div>
-                                    <p class="text-sm font-bold uppercase tracking-wider font-serif">Lead Instructor</p>
-                                </div>
+        // Wait for render cycle
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-                                <!-- Seal -->
-                                <div class="w-32 h-32 rounded-full border-4 border-slate-800 flex items-center justify-center relative bg-white">
-                                    <div class="absolute inset-2 border border-slate-800 rounded-full flex items-center justify-center">
-                                       <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-800"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-                                    </div>
-                                </div>
+        try {
+            if (hiddenCertRef.current) {
+                const canvas = await html2canvas(hiddenCertRef.current, {
+                    scale: 2,
+                    logging: false,
+                    useCORS: true,
+                    backgroundColor: '#ffffff'
+                });
 
-                                <div class="text-center w-64">
-                                    <p class="font-bold text-xl mb-3 font-serif">${cert.issueDate}</p>
-                                    <div class="border-t-2 border-slate-800 mb-2 w-full"></div>
-                                    <p class="text-sm font-bold uppercase tracking-wider font-serif">Date Issued</p>
-                                    <p class="text-[10px] text-slate-500 mt-1 font-mono">ID: ${cert.id}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <script>
-                            window.onload = function() { window.print(); }
-                        </script>
-                    </body>
-                </html>
-             `);
-            printWindow.document.close();
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('l', 'mm', 'a4');
+                const width = pdf.internal.pageSize.getWidth();
+                const height = pdf.internal.pageSize.getHeight();
+
+                pdf.addImage(imgData, 'PNG', 0, 0, width, height);
+
+                const studentName = getStudent(cert.studentId)?.name || 'Student';
+                const safeName = studentName.replace(/[^a-z0-9]/gi, '_');
+                pdf.save(`${safeName}_Certificate_${cert.id}.pdf`);
+                toast.success("Certificate downloaded successfully");
+            } else {
+                toast.error("Template render failed");
+            }
+        } catch (error) {
+            console.error("Certificate generation error:", error);
+            toast.error("Failed to generate PDF");
+        } finally {
+            setIsDownloadingSingle(false);
+            setCurrentGeneratingCert(null);
         }
     };
 
@@ -592,7 +557,7 @@ export default function AdminCertificatesPage() {
                             <Button
                                 variant="outline"
                                 onClick={handleBulkDownload}
-                                disabled={isGeneratingZip || filteredIssued.length === 0}
+                                disabled={isGeneratingZip || filteredIssued.length === 0 || isDownloadingSingle}
                                 className="ml-auto min-w-[200px]"
                             >
                                 {isGeneratingZip ? (
@@ -656,8 +621,8 @@ export default function AdminCertificatesPage() {
                                                             <Button size="icon" variant="ghost" className="h-8 w-8" onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 handleDownloadCertificate(cert);
-                                                            }}>
-                                                                <Download className="h-4 w-4" />
+                                                            }} disabled={isGeneratingZip || isDownloadingSingle}>
+                                                                {isDownloadingSingle ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                                                             </Button>
                                                         </div>
                                                     </TableCell>
@@ -764,7 +729,7 @@ export default function AdminCertificatesPage() {
                         <CertificateTemplate
                             studentName={getStudent(currentGeneratingCert.studentId)?.name || ''}
                             courseName={getCourse(currentGeneratingCert.courseId)?.title || ''}
-                            date={currentGeneratingCert.issueDate}
+                            date={format(new Date(currentGeneratingCert.issueDate), 'MMMM d, yyyy')}
                             certificateId={currentGeneratingCert.id}
                         />
                     </div>
@@ -781,14 +746,15 @@ export default function AdminCertificatesPage() {
                                 ref={certificateRef}
                                 studentName={previewCertificate ? getStudent(previewCertificate.studentId)?.name || '' : ''}
                                 courseName={previewCertificate ? getCourse(previewCertificate.courseId)?.title || '' : ''}
-                                date={previewCertificate ? previewCertificate.issueDate : ''}
+                                date={previewCertificate ? format(new Date(previewCertificate.issueDate), 'MMMM d, yyyy') : ''}
                                 certificateId={previewCertificate ? previewCertificate.id : ''}
                             />
                         </div>
                         <div className="absolute -bottom-16 left-0 right-0 flex justify-center gap-4">
                             <Button onClick={() => setPreviewCertificate(null)} variant="secondary">Close Preview</Button>
-                            <Button onClick={() => previewCertificate && handleDownloadCertificate(previewCertificate)}>
-                                <Printer className="w-4 h-4 mr-2" /> Print / Save PDF
+                            <Button onClick={() => previewCertificate && handleDownloadCertificate(previewCertificate)} disabled={isDownloadingSingle}>
+                                {isDownloadingSingle ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="w-4 h-4 mr-2" />}
+                                Print / Save PDF
                             </Button>
                         </div>
                     </div>

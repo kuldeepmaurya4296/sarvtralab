@@ -5,23 +5,38 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import ProgressRing from '@/components/dashboard/ProgressRing';
 import { ChartCard, BarChartComponent } from '@/components/dashboard/Charts';
+import { db } from '@/data/services/database';
 import { studentWatchTime } from '@/data/analytics';
-import { mockStudents } from '@/data/users';
-import { courses } from '@/data/courses';
-import { mockIssuedCertificates } from '@/data/certificates';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-export default function StudentDashboardPage() {
-    // 1. Identify User (Simulating Auth)
-    const student = mockStudents.find(s => s.id === 'std-001'); // Default to Arjun Patel
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+import { Student } from '@/data/users';
 
-    if (!student) return <div>Loading...</div>;
+export default function StudentDashboardPage() {
+    const { user, isLoading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && (!user || user.role !== 'student')) {
+            router.push('/login');
+        }
+    }, [user, isLoading, router]);
+
+    if (isLoading) {
+        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    }
+
+    if (!user || user.role !== 'student') return null;
+
+    const student = user as Student;
 
     // 2. Fetch Enrolled Courses Data
     const enrolledCoursesDetails = student.enrolledCourses.map(courseId =>
-        courses.find(c => c.id === courseId)
+        db.courses.findById(courseId)
     ).filter(Boolean);
 
     // 3. Calculate "Current Course" (taking the first one for now)
@@ -39,7 +54,7 @@ export default function StudentDashboardPage() {
 
     // 4. Calculate Stats
     const totalEnrolled = student.enrolledCourses.length;
-    const certificatesCount = mockIssuedCertificates.filter(c => c.studentId === student.id).length;
+    const certificatesCount = db.certificates.count(c => c.studentId === student.id);
     // Mock other stats
     const watchTime = "20.8 hrs";
     const overallProgress = "65%";

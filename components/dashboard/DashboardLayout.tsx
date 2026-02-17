@@ -1,6 +1,7 @@
 'use client';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -90,10 +91,12 @@ const DashboardLayout = ({ children, role, userName, userEmail }: DashboardLayou
   const pathname = usePathname();
   const router = useRouter();
 
+  const { logout } = useAuth();
+
   const menuItems = roleMenuItems[role];
 
   const handleLogout = () => {
-    router.push('/login');
+    logout();
   };
 
   return (
