@@ -89,7 +89,7 @@ export interface HelpSupport extends User {
 export const mockStudents: Student[] = [
   {
     id: 'std-001',
-    email: 'arjun.patel@student.robolearn.com',
+    email: 'arjun.patel@student.sarvtralab.in',
     password: 'student123',
     role: 'student',
     name: 'Arjun Patel',
@@ -111,7 +111,7 @@ export const mockStudents: Student[] = [
   },
   {
     id: 'std-002',
-    email: 'priya.sharma@student.robolearn.com',
+    email: 'priya.sharma@student.sarvtralab.in',
     password: 'student123',
     role: 'student',
     name: 'Priya Sharma',
@@ -133,7 +133,7 @@ export const mockStudents: Student[] = [
   },
   {
     id: 'std-003',
-    email: 'rahul.verma@student.robolearn.com',
+    email: 'rahul.verma@student.sarvtralab.in',
     password: 'student123',
     role: 'student',
     name: 'Rahul Verma',
@@ -155,7 +155,7 @@ export const mockStudents: Student[] = [
   },
   {
     id: 'std-004',
-    email: 'kavita.singh@student.robolearn.com',
+    email: 'kavita.singh@student.sarvtralab.in',
     password: 'student123',
     role: 'student',
     name: 'Kavita Singh',
@@ -177,7 +177,7 @@ export const mockStudents: Student[] = [
   },
   {
     id: 'std-005',
-    email: 'rohan.das@student.robolearn.com',
+    email: 'rohan.das@student.sarvtralab.in',
     password: 'student123',
     role: 'student',
     name: 'Rohan Das',
@@ -303,7 +303,7 @@ export const mockGovtOrgs: GovtOrg[] = [
 
 export const mockSuperAdmin: SuperAdmin = {
   id: 'admin-001',
-  email: 'superadmin@robolearn.com',
+  email: 'superadmin@sarvtralab.in',
   password: 'admin123',
   role: 'superadmin',
   name: 'System Administrator',
@@ -315,7 +315,7 @@ export const mockSuperAdmin: SuperAdmin = {
 export const mockTeachers: Teacher[] = [
   {
     id: 'tch-001',
-    email: 'vikram.sharma@robolearn.com',
+    email: 'vikram.sharma@sarvtralab.in',
     password: 'teacher123',
     role: 'teacher',
     name: 'Vikram Sharma',
@@ -330,7 +330,7 @@ export const mockTeachers: Teacher[] = [
   },
   {
     id: 'tch-002',
-    email: 'priya.menon@robolearn.com',
+    email: 'priya.menon@sarvtralab.in',
     password: 'teacher123',
     role: 'teacher',
     name: 'Priya Menon',
@@ -345,7 +345,7 @@ export const mockTeachers: Teacher[] = [
   },
   {
     id: 'tch-003',
-    email: 'amit.kumar@robolearn.com',
+    email: 'amit.kumar@sarvtralab.in',
     password: 'teacher123',
     role: 'teacher',
     name: 'Amit Kumar',
@@ -363,7 +363,7 @@ export const mockTeachers: Teacher[] = [
 export const mockHelpSupport: HelpSupport[] = [
   {
     id: 'help-001',
-    email: 'support.rahul@robolearn.com',
+    email: 'support.rahul@sarvtralab.in',
     password: 'support123',
     role: 'helpsupport',
     name: 'Rahul Gupta',
@@ -377,7 +377,7 @@ export const mockHelpSupport: HelpSupport[] = [
   },
   {
     id: 'help-002',
-    email: 'support.neha@robolearn.com',
+    email: 'support.neha@sarvtralab.in',
     password: 'support123',
     role: 'helpsupport',
     name: 'Neha Singh',
@@ -391,7 +391,7 @@ export const mockHelpSupport: HelpSupport[] = [
   },
   {
     id: 'help-003',
-    email: 'support.arun@robolearn.com',
+    email: 'support.arun@sarvtralab.in',
     password: 'support123',
     role: 'helpsupport',
     name: 'Arun Krishnan',
@@ -445,10 +445,10 @@ export const mockSupportTickets = [
 ];
 
 export const loginCredentials = [
-  { role: 'student', email: 'arjun.patel@student.robolearn.com', password: 'student123' },
+  { role: 'student', email: 'arjun.patel@student.sarvtralab.in', password: 'student123' },
   { role: 'school', email: 'admin@dpsnoida.edu.in', password: 'school123' },
   { role: 'govt', email: 'director@education.gov.in', password: 'govt123' },
-  { role: 'superadmin', email: 'superadmin@robolearn.com', password: 'admin123' },
-  { role: 'teacher', email: 'vikram.sharma@robolearn.com', password: 'teacher123' },
-  { role: 'helpsupport', email: 'support.rahul@robolearn.com', password: 'support123' }
+  { role: 'superadmin', email: 'superadmin@sarvtralab.in', password: 'admin123' },
+  { role: 'teacher', email: 'vikram.sharma@sarvtralab.in', password: 'teacher123' },
+  { role: 'helpsupport', email: 'support.rahul@sarvtralab.in', password: 'support123' }
 ];

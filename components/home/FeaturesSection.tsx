@@ -34,7 +34,7 @@ const FeaturesSection = () => {
             className="section-heading"
           >
             Why Parents & Schools
-            <span className="block gradient-text">Trust Sarvtra Lab</span>
+            <span className="block gradient-text">Trust Sarvtra Labs</span>
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}

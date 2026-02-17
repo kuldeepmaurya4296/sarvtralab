@@ -217,7 +217,7 @@ export default function ContactPage() {
                                     allowFullScreen
                                     loading="lazy"
                                     referrerPolicy="no-referrer-when-downgrade"
-                                    title="Sarvtra Lab Office Location"
+                                    title="Sarvtra Labs Office Location"
                                 />
                             </div>
 

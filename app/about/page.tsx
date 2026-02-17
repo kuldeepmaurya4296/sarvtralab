@@ -29,7 +29,7 @@ const values = [
 ];
 
 const milestones = [
-    { year: '2019', event: 'Sarvtra Lab founded in Noida' },
+    { year: '2019', event: 'Sarvtra Labs founded in Noida' },
     { year: '2020', event: 'First 10 school partnerships' },
     { year: '2021', event: 'Launched online learning platform' },
     { year: '2022', event: 'Expanded to 10 states' },
@@ -54,7 +54,7 @@ export default function AboutPage() {
                             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary to-accent">Innovators & Engineers</span>
                         </h1>
                         <p className="text-lg text-muted-foreground">
-                            Sarvtra Lab is India's premier robotics education platform, dedicated to making
+                            Sarvtra Labs is India's premier robotics education platform, dedicated to making
                             STEM education accessible, engaging, and aligned with global standards.
                         </p>
                     </motion.div>

@@ -38,7 +38,7 @@ export const events: Event[] = [
         description: 'A 2-day intensive workshop to prepare teams for the upcoming championship. Learn strategies, rules, and robot design tips.',
         presenter: 'Priya Sharma & Team',
         image: '/placeholder.svg',
-        location: 'Sarvtra Lab HQ, Noida',
+        location: 'Sarvtra Labs HQ, Noida',
         registrationLink: '#',
         isPast: false
     },

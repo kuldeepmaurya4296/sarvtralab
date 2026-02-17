@@ -65,11 +65,11 @@ export default function LoginPage() {
                 <div className="max-w-md mx-auto w-full">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 mb-8">
-                        <div className="h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                            <GraduationCap className="w-6 h-6 text-primary-foreground" />
+                        <div className="h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
+                            <img src="/logo.jpeg" alt="Sarvtra Labs" className="w-full h-full object-cover" />
                         </div>
                         <span className="font-display text-xl font-bold text-foreground">
-                            Robo<span className="text-primary">Learn</span>
+                            Sarvtra <span className="text-primary">Labs</span>
                         </span>
                     </Link>
 

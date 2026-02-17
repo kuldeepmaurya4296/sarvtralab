@@ -37,7 +37,7 @@ const CTASection = () => {
             transition={{ delay: 0.1 }}
             className="text-lg md:text-xl text-primary-foreground/80 mb-8"
           >
-            Join thousands of students already learning with Sarvtra Lab.
+            Join thousands of students already learning with Sarvtra Labs.
             Get started today with our free trial class!
           </motion.p>
 

@@ -87,7 +87,7 @@ export default function SchoolsPage() {
             <section className="py-20">
                 <div className="container mx-auto px-4">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Partner with Sarvtra Lab?</h2>
+                        <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Partner with Sarvtra Labs?</h2>
                         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                             Everything you need to deliver world-class robotics education
                         </p>
@@ -175,7 +175,7 @@ export default function SchoolsPage() {
                         Ready to Transform Your School's STEM Program?
                     </h2>
                     <p className="text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-                        Schedule a free demo to see how Sarvtra Lab can help your students excel in robotics and coding.
+                        Schedule a free demo to see how Sarvtra Labs can help your students excel in robotics and coding.
                     </p>
                     <Link href="/contact">
                         <Button size="lg" variant="secondary" className="text-lg font-semibold h-14 px-8">

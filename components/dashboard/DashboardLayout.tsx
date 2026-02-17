@@ -109,12 +109,10 @@ const DashboardLayout = ({ children, role, userName, userEmail }: DashboardLayou
         {/* Logo */}
         <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
           <Link href="/" className="flex items-center gap-2">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${roleColors[role]} flex items-center justify-center`}>
-              <GraduationCap className="w-6 h-6 text-primary-foreground" />
-            </div>
+
             {sidebarOpen && (
               <span className="font-display text-lg font-bold">
-                Robo<span className="text-sidebar-primary">Learn</span>
+                Sarvtra <span className="text-sidebar-primary">Labs</span>
               </span>
             )}
           </Link>
@@ -184,11 +182,11 @@ const DashboardLayout = ({ children, role, userName, userEmail }: DashboardLayou
             >
               <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
                 <Link href="/" className="flex items-center gap-2">
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${roleColors[role]} flex items-center justify-center`}>
-                    <GraduationCap className="w-6 h-6 text-primary-foreground" />
+                  <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
+                    <img src="/logo.jpeg" alt="Sarvtra Labs" className="w-full h-full object-cover" />
                   </div>
                   <span className="font-display text-lg font-bold">
-                    Robo<span className="text-sidebar-primary">Learn</span>
+                    Sarvtra <span className="text-sidebar-primary">Labs</span>
                   </span>
                 </Link>
                 <button

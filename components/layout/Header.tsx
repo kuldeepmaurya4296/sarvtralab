@@ -20,7 +20,7 @@ const Header = () => {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
             <div className="h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-              <img src="/logo.jpeg" alt="Sarvtra Lab" className="w-full h-full object-cover" />
+              <img src="/logo.jpeg" alt="Sarvtra Labs" className="w-full h-full object-cover" />
             </div>
 
           </Link>

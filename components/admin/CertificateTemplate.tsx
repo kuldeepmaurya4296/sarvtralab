@@ -98,7 +98,7 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateProps>(
                                 <div style={{ backgroundColor: '#0f172a', color: '#D4AF37', padding: '6px', borderRadius: '9999px', display: 'flex' }}>
                                     <Award style={{ width: '24px', height: '24px' }} />
                                 </div>
-                                <span style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.2em', color: '#1e293b', textTransform: 'uppercase' }}>Sarvtra Lab</span>
+                                <span style={{ fontSize: '20px', fontWeight: 'bold', letterSpacing: '0.2em', color: '#1e293b', textTransform: 'uppercase' }}>Sarvtra Labs</span>
                             </div>
                             <h1 style={{ fontSize: '60px', fontWeight: 'bold', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '4px', textShadow: "0 1px 2px rgba(0, 0, 0, 0.1)" }}>
                                 Certificate
@@ -151,7 +151,7 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateProps>(
                                         <div style={{ position: 'absolute', inset: 0, border: '2px solid rgba(15, 23, 42, 0.2)', borderRadius: '9999px', margin: '2px' }}></div>
                                         <div style={{ textAlign: 'center', color: '#0f172a', zIndex: 10, transform: 'rotate(-12deg)' }}>
                                             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2px' }}><Star style={{ width: '24px', height: '24px', fill: '#0f172a' }} /></div>
-                                            <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', lineHeight: '1.25' }}>Sarvtra Lab<br />Certified</div>
+                                            <div style={{ fontSize: '8px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.1em', lineHeight: '1.25' }}>Sarvtra Labs<br />Certified</div>
                                         </div>
                                         {/* Ribbon tails */}
                                         <div style={{ position: 'absolute', bottom: '-24px', left: '50%', transform: 'translateX(-50%) rotate(45deg)', width: '64px', height: '64px', backgroundColor: '#C5A028', zIndex: -10 }}></div>
@@ -179,7 +179,7 @@ export const CertificateTemplate = forwardRef<HTMLDivElement, CertificateProps>(
 
                     {/* Bottom Edge */}
                     <div style={{ position: 'absolute', bottom: '16px', left: 0, width: '100%', textAlign: 'center' }}>
-                        <p style={{ fontSize: '8px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Verified Education Partner • Sarvtra Lab Systems</p>
+                        <p style={{ fontSize: '8px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Verified Education Partner • Sarvtra Labs</p>
                     </div>
                 </div>
             </div>

@@ -67,10 +67,10 @@ export default function SignupPage() {
                 <div className="max-w-lg mx-auto w-full">
                     <Link href="/" className="flex items-center gap-2 mb-8">
                         <div className="h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                            <img src="/logo.jpeg" alt="Sarvtra Lab" className="w-full h-full object-cover" />
+                            <img src="/logo.jpeg" alt="Sarvtra Labs" className="w-full h-full object-cover" />
                         </div>
                         <span className="font-display text-xl font-bold text-foreground">
-                            Sarvtra<span className="text-primary">Lab</span>
+                            Sarvtra <span className="text-primary">Labs</span>
                         </span>
                     </Link>
 

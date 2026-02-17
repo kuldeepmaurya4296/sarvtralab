@@ -19,7 +19,7 @@ export default function PressPage() {
                         Press & Media
                     </motion.h1>
                     <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-                        Stay up to date with the latest announcements and media coverage about Sarvtra Lab.
+                        Stay up to date with the latest announcements and media coverage about Sarvtra Labs.
                     </p>
                     <div className="flex justify-center gap-4">
                         <Button variant="outline" className="gap-2">

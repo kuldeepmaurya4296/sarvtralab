@@ -16,7 +16,7 @@ const Footer = () => {
                 <img src="/logo.jpeg" alt="Sarvtra Lab" className="w-full h-full object-cover" />
               </div>
               <span className="font-display text-xl font-bold">
-                Sarvtra<span className="text-primary">Lab</span>
+                Sarvtra <span className="text-primary">Labs</span>
               </span>
             </Link>
             <p className="text-background/70 text-sm mb-6">
@@ -137,7 +137,7 @@ const Footer = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-background/60">
-              © 2025 Sarvtra Lab. All rights reserved.
+              © 2025 Sarvtra Labs. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
               <Link href="/terms" className="text-sm text-background/60 hover:text-primary transition-colors">

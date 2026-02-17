@@ -78,11 +78,11 @@ export default function AdminSettingsPage() {
                                     <Separator />
                                     <div className="space-y-2">
                                         <Label htmlFor="platform-name">Platform Name</Label>
-                                        <Input id="platform-name" defaultValue="AI RoboLearn" />
+                                        <Input id="platform-name" defaultValue="Sarvtra Labs" />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="support-email">Support Email</Label>
-                                        <Input id="support-email" defaultValue="support@robolearn.com" />
+                                        <Input id="support-email" defaultValue="support@sarvtralab.in" />
                                     </div>
                                 </div>
                                 <div className="flex justify-end pt-4">

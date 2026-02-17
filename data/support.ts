@@ -88,7 +88,7 @@ export const supportArticles: SupportArticle[] = [
         id: 'art-401',
         categoryId: 'cat-schools',
         title: 'Requirements for setting up a Robotics Lab',
-        summary: 'Space, equipment, and network requirements for a Sarvtra Lab setup.',
+        summary: 'Space, equipment, and network requirements for a Sarvtra Labs setup.',
         lastUpdated: '2025-07-30'
     }
 ];

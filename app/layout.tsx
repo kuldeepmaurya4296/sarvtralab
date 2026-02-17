@@ -14,7 +14,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Sarvtra Lab - Modern EduTech Platform",
+  title: "Sarvtra Labs - Modern EduTech Platform",
   description: "An innovative education platform connecting students, schools, and government.",
 };
 

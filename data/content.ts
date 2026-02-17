@@ -101,7 +101,7 @@ export const testimonials: Testimonial[] = [
     name: 'Priya Sharma',
     role: 'Student, Class 8',
     school: 'Delhi Public School, Noida',
-    content: 'Sarvtra Lab made robotics so fun and easy to understand! I won 2nd place in the state robotics competition after completing the intermediate course.',
+    content: 'Sarvtra Labs made robotics so fun and easy to understand! I won 2nd place in the state robotics competition after completing the intermediate course.',
     rating: 5,
     avatar: '/placeholder.svg'
   },
@@ -110,7 +110,7 @@ export const testimonials: Testimonial[] = [
     name: 'Dr. Meera Gupta',
     role: 'Principal',
     school: 'Delhi Public School, Noida',
-    content: 'Implementing Sarvtra Lab in our school has transformed how students approach STEM education. The curriculum perfectly aligns with CBSE requirements.',
+    content: 'Implementing Sarvtra Labs in our school has transformed how students approach STEM education. The curriculum perfectly aligns with CBSE requirements.',
     rating: 5,
     avatar: '/placeholder.svg'
   },
@@ -128,7 +128,7 @@ export const testimonials: Testimonial[] = [
     name: 'Prof. Vikram Singh',
     role: 'HOD - Computer Science',
     school: 'Kendriya Vidyalaya, Delhi',
-    content: 'The teacher training provided by Sarvtra Lab equipped our faculty with the skills to deliver world-class robotics education.',
+    content: 'The teacher training provided by Sarvtra Labs equipped our faculty with the skills to deliver world-class robotics education.',
     rating: 4,
     avatar: '/placeholder.svg'
   }
@@ -374,21 +374,21 @@ export interface PressRelease {
 export const pressReleases: PressRelease[] = [
   {
     id: 'pr-1',
-    title: 'Sarvtra Lab Partners with 50 Govt Schools in UP',
+    title: 'Sarvtra Labs Partners with 50 Govt Schools in UP',
     date: 'Jan 10, 2026',
     source: 'Education Times',
     link: '#'
   },
   {
     id: 'pr-2',
-    title: 'Sarvtra Lab Raises Series A Funding to Expand Reach',
+    title: 'Sarvtra Labs Raises Series A Funding to Expand Reach',
     date: 'Nov 20, 2025',
     source: 'TechCrunch',
     link: '#'
   },
   {
     id: 'pr-3',
-    title: 'Best EdTech Startup Award 2025 goes to Sarvtra Lab',
+    title: 'Best EdTech Startup Award 2025 goes to Sarvtra Labs',
     date: 'Dec 05, 2025',
     source: 'Startup India',
     link: '#'

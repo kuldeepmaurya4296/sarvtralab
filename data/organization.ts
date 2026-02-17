@@ -16,9 +16,9 @@ export interface SocialProfile {
 }
 
 export const organizationDetails = {
-    name: 'Sarvtra Lab',
+    name: 'Sarvtra Labs',
     tagline: 'Innovating Education for Future',
-    description: 'Sarvtra Lab is India\'s premier robotics education platform, dedicated to making STEM education accessible, engaging, and aligned with global standards.',
+    description: 'Sarvtra Labs is India\'s premier robotics education platform, dedicated to making STEM education accessible, engaging, and aligned with global standards.',
     contact: {
         email: 'hello@sarvtralab.in',
         phone: '+91 1800 123 4567',

@@ -19,7 +19,7 @@ export default function BlogPage() {
                         Insights & Updates
                     </motion.h1>
                     <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                        Latest news, trends in robotics education, and updates from Sarvtra Lab.
+                        Latest news, trends in robotics education, and updates from Sarvtra Labs.
                     </p>
                 </div>
             </section>
