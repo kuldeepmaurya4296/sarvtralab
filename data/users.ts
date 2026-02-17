@@ -25,6 +25,7 @@ export interface Student extends User {
   city: string;
   state: string;
   pincode: string;
+  status: 'active' | 'inactive';
 }
 
 export interface School extends User {
@@ -55,6 +56,7 @@ export interface GovtOrg extends User {
   state?: string;
   district?: string;
   assignedSchools: string[];
+  status: 'active' | 'inactive';
 }
 
 export interface SuperAdmin extends User {
@@ -104,6 +106,7 @@ export const mockStudents: Student[] = [
     city: 'Noida',
     state: 'Uttar Pradesh',
     pincode: '201301',
+    status: 'active',
     createdAt: '2025-01-15'
   },
   {
@@ -125,6 +128,7 @@ export const mockStudents: Student[] = [
     city: 'Noida',
     state: 'Uttar Pradesh',
     pincode: '201301',
+    status: 'active',
     createdAt: '2024-08-10'
   },
   {
@@ -146,6 +150,7 @@ export const mockStudents: Student[] = [
     city: 'Gurugram',
     state: 'Haryana',
     pincode: '122001',
+    status: 'active',
     createdAt: '2024-06-01'
   }
 ];
@@ -231,6 +236,7 @@ export const mockGovtOrgs: GovtOrg[] = [
     department: 'School Education & Literacy',
     jurisdiction: 'national',
     assignedSchools: ['sch-001', 'sch-002', 'sch-003'],
+    status: 'active',
     createdAt: '2024-01-01'
   },
   {
@@ -246,6 +252,7 @@ export const mockGovtOrgs: GovtOrg[] = [
     jurisdiction: 'state',
     state: 'Uttar Pradesh',
     assignedSchools: ['sch-001'],
+    status: 'active',
     createdAt: '2024-03-01'
   }
 ];
