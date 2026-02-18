@@ -81,6 +81,7 @@ const TestimonialsSection = () => {
                             src={testimonial.avatar}
                             alt={testimonial.name}
                             fill
+                            sizes="48px"
                             className="object-cover"
                           />
                         </div>

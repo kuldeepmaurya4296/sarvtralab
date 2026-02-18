@@ -15,7 +15,7 @@ const Header = () => {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-background md:bg-background/80 md:backdrop-blur-xl border-b">
       <Link
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-[60] bg-primary text-primary-foreground px-4 py-2 rounded-lg"

@@ -139,13 +139,13 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* SEO Keyword Cloud */}
-      <div className="border-t border-background/5 bg-background/2">
+      {/* SEO Keyword Cloud - Hidden on mobile for performance */}
+      <div className="border-t border-background/5 bg-background/2 hidden md:block">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-6xl mx-auto">
             <h5 className="text-[10px] uppercase tracking-widest text-background/30 mb-4 font-bold">Recommended Topics & Areas We Serve</h5>
             <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-background/40">
-              {SEO_KEYWORDS.slice(0, 100).map((keyword, index, array) => (
+              {SEO_KEYWORDS.slice(0, 50).map((keyword, index, array) => (
                 <span key={index} className="hover:text-primary transition-colors cursor-default">
                   {keyword}
                   {index < array.length - 1 && <span className="ml-3 text-background/10">•</span>}

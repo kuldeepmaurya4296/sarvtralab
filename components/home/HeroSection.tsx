@@ -16,6 +16,7 @@ const HeroSection = () => {
           alt="Students learning robotics with Sarvtra Labs"
           fill
           priority
+          sizes="100vw"
           className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/40" />
@@ -29,7 +30,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 backdrop-blur-sm border border-primary/30 mb-6"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/40 md:bg-primary/20 md:backdrop-blur-sm border border-primary/30 mb-6"
           >
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium text-primary-foreground">CBSE & NEP 2020 Aligned Curriculum</span>
@@ -65,7 +66,7 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-success/20 backdrop-blur-sm border border-success/30 mb-8"
+            className="inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-success/40 md:bg-success/20 md:backdrop-blur-sm border border-success/30 mb-8"
           >
             <div className="flex items-center gap-1 text-success">
               <IndianRupee className="w-5 h-5" />
@@ -118,11 +119,11 @@ const HeroSection = () => {
         </div>
       </div>
 
-      {/* Floating Elements */}
+      {/* Floating Elements - Hidden on mobile for performance */}
       <motion.div
         animate={{ y: [0, -10, 0] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute right-20 top-1/4 hidden xl:block"
+        className="absolute right-20 top-1/4 hidden xl:block pointer-events-none"
       >
         <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/30 to-accent/30 backdrop-blur-xl border border-white/20" />
       </motion.div>
@@ -130,7 +131,7 @@ const HeroSection = () => {
       <motion.div
         animate={{ y: [0, 10, 0] }}
         transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute right-40 bottom-1/4 hidden xl:block"
+        className="absolute right-40 bottom-1/4 hidden xl:block pointer-events-none"
       >
         <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-secondary/30 to-primary/30 backdrop-blur-xl border border-white/20" />
       </motion.div>

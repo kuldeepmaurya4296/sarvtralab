@@ -14,6 +14,7 @@ const CTASection = () => {
           src="/pattern-bg.jpg"
           alt=""
           fill
+          sizes="100vw"
           className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-primary/95 to-accent/90" />
@@ -63,16 +64,16 @@ const CTASection = () => {
         </div>
       </div>
 
-      {/* Decorative Elements */}
+      {/* Decorative Elements - Hidden on mobile for performance */}
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        className="absolute -right-20 -top-20 w-64 h-64 rounded-full border-4 border-primary-foreground/10"
+        className="absolute -right-20 -top-20 w-64 h-64 rounded-full border-4 border-primary-foreground/10 hidden md:block pointer-events-none"
       />
       <motion.div
         animate={{ rotate: -360 }}
         transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-        className="absolute -left-20 -bottom-20 w-80 h-80 rounded-full border-4 border-primary-foreground/10"
+        className="absolute -left-20 -bottom-20 w-80 h-80 rounded-full border-4 border-primary-foreground/10 hidden md:block pointer-events-none"
       />
     </section>
   );
