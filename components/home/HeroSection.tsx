@@ -3,17 +3,20 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, Play, Sparkles, Check, IndianRupee } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import heroImage from '@/assets/hero-robotics.jpg';
+import Image from 'next/image';
+const heroImage = '/hero-robotics.jpg';
 
 const HeroSection = () => {
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 z-0">
-        <img
-          src={heroImage.src}
-          alt="Students learning robotics"
-          className="w-full h-full object-cover"
+        <Image
+          src="/hero-robotics.jpg"
+          alt="Students learning robotics with Sarvtra Labs"
+          fill
+          priority
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-foreground/95 via-foreground/80 to-foreground/40" />
       </div>

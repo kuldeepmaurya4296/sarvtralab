@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import { OrganizationSchema } from "@/components/seo/StructuredData";
 import { Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
+import { constructMetadata } from "@/lib/seo";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -13,10 +14,7 @@ const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
 });
 
-export const metadata: Metadata = {
-  title: "Sarvtra Labs - Modern EduTech Platform",
-  description: "An innovative education platform connecting students, schools, and government.",
-};
+export const metadata = constructMetadata();
 
 export default function RootLayout({
   children,
@@ -29,6 +27,7 @@ export default function RootLayout({
         className={`${plusJakartaSans.variable} ${spaceGrotesk.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
+        <OrganizationSchema />
         <Providers>{children}</Providers>
       </body>
     </html>

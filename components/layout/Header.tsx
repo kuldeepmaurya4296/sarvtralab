@@ -6,6 +6,7 @@ import { Menu, X, GraduationCap, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { navLinks } from '@/data/content';
+import Image from 'next/image';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -17,12 +18,16 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-              <img src="/logo.jpeg" alt="Sarvtra Labs" className="w-full h-full object-cover" />
+          <Link href="/" className="flex-center gap-2">
+            <div className="h-10 w-32 relative overflow-hidden flex items-center justify-center">
+              <Image
+                src="/favicon.svg"
+                alt="Sarvtra Labs (Sarwatra Labs) Logo"
+                fill
+                className="object-contain"
+                priority
+              />
             </div>
-
           </Link>
 
           {/* Desktop Navigation */}

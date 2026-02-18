@@ -27,6 +27,7 @@ import {
   Award
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Image from 'next/image';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -149,8 +150,14 @@ const DashboardLayout = ({ children, role, userName, userEmail, hideSidebar = fa
           {/* Logo */}
           <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white flex-shrink-0">
-                <img src="/logo.jpeg" alt="Sarvtra Labs" className="w-full h-full object-cover" />
+              <div className="w-8 h-8 relative overflow-hidden flex items-center justify-center flex-shrink-0">
+                <Image
+                  src="/favicon.svg"
+                  alt="Sarvtra Labs"
+                  fill
+                  className="object-contain"
+                  priority
+                />
               </div>
               {sidebarOpen && (
                 <span className="font-display text-lg font-bold">
@@ -225,8 +232,13 @@ const DashboardLayout = ({ children, role, userName, userEmail, hideSidebar = fa
             >
               <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
                 <Link href="/" className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                    <img src="/logo.jpeg" alt="Sarvtra Labs" className="w-full h-full object-cover" />
+                  <div className="w-10 h-10 relative overflow-hidden flex items-center justify-center">
+                    <Image
+                      src="/favicon.svg"
+                      alt="Sarvtra Labs"
+                      fill
+                      className="object-contain"
+                    />
                   </div>
                   <span className="font-display text-lg font-bold">
                     Sarvtra <span className="text-sidebar-primary">Labs</span>

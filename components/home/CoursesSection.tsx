@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { Clock, Users, Star, ArrowRight, IndianRupee } from 'lucide-react';
 import { courses, courseCategories } from '@/data/courses';
 import { Button } from '@/components/ui/button';
-import roboticsIllustration from '@/assets/robotics-illustration.jpg';
+import Image from 'next/image';
+const roboticsIllustration = '/robotics-illustration.jpg';
 
 const CoursesSection = () => {
   const featuredCourses = courses.slice(0, 3);
@@ -78,7 +79,12 @@ const CoursesSection = () => {
             >
               {/* Image */}
               <div className="course-card-image">
-                <img src={roboticsIllustration.src} alt={course.title} />
+                <Image
+                  src="/robotics-illustration.jpg"
+                  alt={course.title}
+                  fill
+                  className="object-cover"
+                />
                 <div className="absolute top-4 left-4 z-10">
                   <span className={`px-3 py-1 rounded-full text-xs font-semibold
                     ${course.category === 'foundation' ? 'bg-primary text-primary-foreground' :

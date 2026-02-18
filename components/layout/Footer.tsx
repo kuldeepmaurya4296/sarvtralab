@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { GraduationCap, Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import Image from 'next/image';
 import { footerLinks } from '@/data/content';
 import { organizationDetails } from '@/data/organization';
 
@@ -12,8 +13,13 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className=" h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                <img src="/logo.jpeg" alt="Sarvtra Lab" className="w-full h-full object-cover" />
+              <div className="h-10 w-32 relative overflow-hidden flex items-center justify-center">
+                <Image
+                  src="/favicon.svg"
+                  alt="Sarvtra Labs (Sarwatra Labs) Logo"
+                  fill
+                  className="object-contain"
+                />
               </div>
               <span className="font-display text-xl font-bold">
                 Sarvtra <span className="text-primary">Labs</span>
