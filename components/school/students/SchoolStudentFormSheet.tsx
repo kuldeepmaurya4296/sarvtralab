@@ -11,12 +11,13 @@ import { Separator } from '@/components/ui/separator';
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { Student } from '@/data/users';
 
 interface SchoolStudentFormSheetProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     mode: 'add' | 'edit';
-    initialData?: any;
+    initialData?: Student | null;
     onSubmit: (data: any) => void;
 }
 

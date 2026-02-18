@@ -37,7 +37,13 @@ interface DashboardLayoutProps {
   hideSidebar?: boolean;
 }
 
-const roleMenuItems: Record<string, any[]> = {
+interface MenuItem {
+  icon: any;
+  label: string;
+  href: string;
+}
+
+const roleMenuItems: Record<string, MenuItem[]> = {
   student: [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/student/dashboard' },
     { icon: BookOpen, label: 'My Courses', href: '/student/courses' },
@@ -184,7 +190,7 @@ const DashboardLayout = ({ children, role, userName, userEmail, hideSidebar = fa
 
           {/* Navigation */}
           <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-            {menuItems.map((item: any) => {
+            {menuItems.map((item: MenuItem) => {
               const isActive = pathname === item.href;
               return (
                 <Link
@@ -259,7 +265,7 @@ const DashboardLayout = ({ children, role, userName, userEmail, hideSidebar = fa
               </div>
 
               <nav className="flex-1 px-3 py-4 space-y-1">
-                {menuItems.map((item: any) => {
+                {menuItems.map((item: MenuItem) => {
                   const isActive = pathname === item.href;
                   return (
                     <Link
@@ -301,7 +307,7 @@ const DashboardLayout = ({ children, role, userName, userEmail, hideSidebar = fa
               <Menu className="w-5 h-5" />
             </button>
             <h1 className="text-lg font-semibold text-foreground hidden md:block">
-              {menuItems.find((item: any) => item.href === pathname)?.label || 'Dashboard'}
+              {menuItems.find((item: MenuItem) => item.href === pathname)?.label || 'Dashboard'}
             </h1>
           </div>
 

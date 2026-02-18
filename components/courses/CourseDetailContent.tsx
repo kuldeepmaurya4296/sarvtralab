@@ -10,9 +10,10 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import Image from 'next/image';
+import { Course, CurriculumModule, Lesson } from '@/data/courses';
 
 interface CourseDetailContentProps {
-    course: any; // Use the proper type from your course data
+    course: Course;
 }
 
 export default function CourseDetailContent({ course }: CourseDetailContentProps) {
@@ -158,7 +159,7 @@ export default function CourseDetailContent({ course }: CourseDetailContentProps
                 <div className="container mx-auto px-4">
                     <h2 className="text-3xl font-bold mb-10">Course Curriculum</h2>
                     <div className="max-w-3xl mx-auto space-y-6">
-                        {course.curriculum.map((module: any) => (
+                        {course.curriculum.map((module: CurriculumModule) => (
                             <Accordion key={module.id} type="single" collapsible>
                                 <AccordionItem value={module.id} className="border rounded-2xl overflow-hidden px-4">
                                     <AccordionTrigger className="hover:no-underline py-6">
@@ -174,7 +175,7 @@ export default function CourseDetailContent({ course }: CourseDetailContentProps
                                     </AccordionTrigger>
                                     <AccordionContent className="pb-6">
                                         <div className="space-y-4 pt-4 border-t">
-                                            {module.lessons.map((lesson: any) => (
+                                            {module.lessons.map((lesson: Lesson) => (
                                                 <div key={lesson.id} className="flex items-center gap-4 p-4 rounded-xl bg-muted/30">
                                                     <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center">
                                                         {lesson.type === 'video' ? <Play className="w-4 h-4 text-primary" /> : <FileText className="w-4 h-4 text-accent" />}

@@ -3,6 +3,7 @@ import { GraduationCap, Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, P
 import Image from 'next/image';
 import { footerLinks } from '@/data/content';
 import { organizationDetails } from '@/data/organization';
+import { SEO_KEYWORDS } from '@/lib/seo';
 
 const Footer = () => {
   return (
@@ -29,19 +30,19 @@ const Footer = () => {
               India's leading CBSE-aligned robotics and coding education platform for K-12 students.
             </p>
             <div className="flex gap-3">
-              <a href="#" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
+              <a href="#" aria-label="Follow us on Facebook" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
                 <Facebook className="w-4 h-4" />
               </a>
-              <a href="#" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
+              <a href="#" aria-label="Follow us on Twitter" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
                 <Twitter className="w-4 h-4" />
               </a>
-              <a href="#" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
+              <a href="#" aria-label="Follow us on Instagram" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
                 <Instagram className="w-4 h-4" />
               </a>
-              <a href="#" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
+              <a href="#" aria-label="Follow us on LinkedIn" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
                 <Linkedin className="w-4 h-4" />
               </a>
-              <a href="#" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
+              <a href="#" aria-label="Subscribe to our Youtube channel" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
                 <Youtube className="w-4 h-4" />
               </a>
             </div>
@@ -133,6 +134,23 @@ const Footer = () => {
                 <p className="text-sm text-background/50">Visit Us</p>
                 <p className="font-medium text-sm">{organizationDetails.contact.address}</p>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SEO Keyword Cloud */}
+      <div className="border-t border-background/5 bg-background/2">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-6xl mx-auto">
+            <h5 className="text-[10px] uppercase tracking-widest text-background/30 mb-4 font-bold">Recommended Topics & Areas We Serve</h5>
+            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-background/40">
+              {SEO_KEYWORDS.slice(0, 100).map((keyword, index, array) => (
+                <span key={index} className="hover:text-primary transition-colors cursor-default">
+                  {keyword}
+                  {index < array.length - 1 && <span className="ml-3 text-background/10">•</span>}
+                </span>
+              ))}
             </div>
           </div>
         </div>

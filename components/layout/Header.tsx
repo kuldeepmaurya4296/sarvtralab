@@ -16,6 +16,12 @@ const Header = () => {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b">
+      <Link
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 z-[60] bg-primary text-primary-foreground px-4 py-2 rounded-lg"
+      >
+        Skip to main content
+      </Link>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           <Link href="/" className="flex-center gap-2">
@@ -31,7 +37,7 @@ const Header = () => {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1" aria-label="Main navigation">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -61,6 +67,9 @@ const Header = () => {
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="lg:hidden p-2 rounded-lg hover:bg-muted transition-colors"
+            aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMenuOpen}
+            aria-controls="mobile-menu"
           >
             {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -75,8 +84,9 @@ const Header = () => {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             className="lg:hidden bg-background border-b"
+            id="mobile-menu"
           >
-            <nav className="container mx-auto px-4 py-4 flex flex-col gap-2">
+            <nav className="container mx-auto px-4 py-4 flex flex-col gap-2" aria-label="Mobile navigation">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}

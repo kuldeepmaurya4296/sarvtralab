@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -13,16 +13,24 @@ import Image from 'next/image';
 const CoursesContent = () => {
     const searchParams = useSearchParams();
     const [searchQuery, setSearchQuery] = useState('');
+    const [debouncedQuery, setDebouncedQuery] = useState('');
     const activeCategory = searchParams.get('category') || 'all';
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedQuery(searchQuery);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const filteredCourses = useMemo(() => {
         return courses.filter((course) => {
             const matchesCategory = activeCategory === 'all' || course.category === activeCategory;
-            const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                course.description.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesSearch = course.title.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+                course.description.toLowerCase().includes(debouncedQuery.toLowerCase());
             return matchesCategory && matchesSearch;
         });
-    }, [activeCategory, searchQuery]);
+    }, [activeCategory, debouncedQuery]);
 
     return (
         <>
@@ -44,14 +52,17 @@ const CoursesContent = () => {
                         </p>
 
                         {/* Search */}
-                        <div className="relative max-w-md mx-auto">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                        <div className="relative max-w-md mx-auto" role="search">
+                            <label htmlFor="course-search" className="sr-only">Search robotics courses</label>
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" aria-hidden="true" />
                             <Input
+                                id="course-search"
                                 type="text"
-                                placeholder="Search courses..."
+                                placeholder="Search courses by name or topic..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="pl-12 h-12 text-base bg-background/50 backdrop-blur-sm"
+                                className="pl-12 h-12 text-base bg-background/50 backdrop-blur-sm border-2 focus-visible:ring-primary/20"
+                                aria-label="Search robotics courses"
                             />
                         </div>
                     </motion.div>
@@ -61,14 +72,10 @@ const CoursesContent = () => {
             {/* Courses Section */}
             <section className="py-16">
                 <div className="container mx-auto px-4">
-                    {/* Category Filters */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex flex-wrap justify-center gap-4 mb-12"
-                    >
+                    <nav className="flex flex-wrap justify-center gap-4 mb-12" aria-label="Course categories">
                         <Link
                             href="/courses"
+                            aria-current={activeCategory === 'all' ? 'page' : undefined}
                             className={`px-6 py-3 rounded-full border-2 transition-all font-semibold
                 ${activeCategory === 'all'
                                     ? 'border-primary bg-primary text-primary-foreground'
@@ -81,6 +88,7 @@ const CoursesContent = () => {
                             <Link
                                 key={category.id}
                                 href={`/courses?category=${category.id}`}
+                                aria-current={activeCategory === category.id ? 'page' : undefined}
                                 className={`px-6 py-3 rounded-full border-2 transition-all font-semibold
                   ${activeCategory === category.id
                                         ? 'border-primary bg-primary text-primary-foreground'
@@ -91,7 +99,7 @@ const CoursesContent = () => {
                                 <span className="text-sm opacity-70 ml-2">({category.grades})</span>
                             </Link>
                         ))}
-                    </motion.div>
+                    </nav>
 
                     {/* Results Count */}
                     <p className="text-center text-muted-foreground mb-8">
@@ -111,9 +119,11 @@ const CoursesContent = () => {
                                 <div className="relative h-48 bg-muted overflow-hidden">
                                     <Image
                                         src="/robotics-illustration.jpg"
-                                        alt={course.title}
+                                        alt={`Cover image for ${course.title}`}
                                         fill
+                                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                         className="object-cover"
+                                        priority={index < 3}
                                     />
                                     <div className="absolute top-4 left-4 z-10">
                                         <span className={`px-3 py-1 rounded-full text-xs font-semibold
@@ -159,9 +169,11 @@ const CoursesContent = () => {
 
                                     <div className="flex items-center justify-between pt-4 border-t">
                                         <div>
+                                            <span className="sr-only">Current price:</span>
                                             <span className="text-2xl font-bold text-foreground">
                                                 ₹{course.price.toLocaleString()}
                                             </span>
+                                            <span className="sr-only">Original price:</span>
                                             <span className="text-sm text-muted-foreground line-through ml-2">
                                                 ₹{course.originalPrice.toLocaleString()}
                                             </span>
