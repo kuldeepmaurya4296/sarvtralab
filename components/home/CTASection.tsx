@@ -3,17 +3,18 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import patternBg from '@/assets/pattern-bg.jpg';
+import Image from 'next/image';
 
 const CTASection = () => {
   return (
     <section className="py-20 md:py-28 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 z-0">
-        <img
-          src={patternBg.src}
+        <Image
+          src="/pattern-bg.jpg"
           alt=""
-          className="w-full h-full object-cover"
+          fill
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-primary/95 to-accent/90" />
       </div>

@@ -8,6 +8,7 @@ import { Clock, Users, Star, ArrowRight, IndianRupee, Search } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { courses, courseCategories } from '@/data/courses';
+import Image from 'next/image';
 
 const CoursesContent = () => {
     const searchParams = useSearchParams();
@@ -107,8 +108,13 @@ const CoursesContent = () => {
                                 transition={{ duration: 0.5, delay: index * 0.1 }}
                                 className="bg-card rounded-2xl border overflow-hidden hover:shadow-lg transition-shadow"
                             >
-                                <div className="relative h-48 bg-muted">
-                                    <img src="/robotics-illustration.jpg" alt={course.title} className="w-full h-full object-cover" />
+                                <div className="relative h-48 bg-muted overflow-hidden">
+                                    <Image
+                                        src="/robotics-illustration.jpg"
+                                        alt={course.title}
+                                        fill
+                                        className="object-cover"
+                                    />
                                     <div className="absolute top-4 left-4 z-10">
                                         <span className={`px-3 py-1 rounded-full text-xs font-semibold
                       ${course.category === 'foundation' ? 'bg-primary text-primary-foreground' :

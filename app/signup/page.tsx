@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, GraduationCap, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import patternBg from '@/assets/pattern-bg.jpg';
+import Image from 'next/image';
 
 type UserRole = 'student' | 'school' | 'govt';
 
@@ -38,10 +38,11 @@ export default function SignupPage() {
         <div className="min-h-screen flex">
             {/* Left Side - Image */}
             <div className="hidden lg:flex flex-1 relative bg-primary">
-                <img
-                    src={patternBg.src}
+                <Image
+                    src="/pattern-bg.jpg"
                     alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-90" />
                 <div className="relative z-10 flex flex-col justify-center p-12 text-primary-foreground">
@@ -66,8 +67,14 @@ export default function SignupPage() {
             <div className="flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-20 py-12 bg-background overflow-y-auto">
                 <div className="max-w-lg mx-auto w-full">
                     <Link href="/" className="flex items-center gap-2 mb-8">
-                        <div className="h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                            <img src="/logo.jpeg" alt="Sarvtra Labs" className="w-full h-full object-cover" />
+                        <div className="h-10 w-32 relative overflow-hidden flex items-center justify-center">
+                            <Image
+                                src="/favicon.svg"
+                                alt="Sarvtra Labs (Sarwatra Labs) Logo"
+                                fill
+                                className="object-contain"
+                                priority
+                            />
                         </div>
                         <span className="font-display text-xl font-bold text-foreground">
                             Sarvtra <span className="text-primary">Labs</span>

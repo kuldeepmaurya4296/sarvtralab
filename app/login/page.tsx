@@ -7,7 +7,7 @@ import { Eye, EyeOff, GraduationCap, Mail, Lock, ArrowRight, Check } from 'lucid
 import { Button } from '@/components/ui/button';
 import { loginCredentials } from '@/data/users';
 import { useAuth } from '@/context/AuthContext';
-import patternBg from '@/assets/pattern-bg.jpg';
+import Image from 'next/image';
 
 type UserRole = 'student' | 'school' | 'govt' | 'admin';
 
@@ -65,8 +65,14 @@ export default function LoginPage() {
                 <div className="max-w-md mx-auto w-full">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 mb-8">
-                        <div className="h-10 rounded-xl overflow-hidden flex items-center justify-center bg-white">
-                            <img src="/logo.jpeg" alt="Sarvtra Labs" className="w-full h-full object-cover" />
+                        <div className="h-10 w-32 relative overflow-hidden flex items-center justify-center">
+                            <Image
+                                src="/favicon.svg"
+                                alt="Sarvtra Labs (Sarwatra Labs) Logo"
+                                fill
+                                className="object-contain"
+                                priority
+                            />
                         </div>
                         <span className="font-display text-xl font-bold text-foreground">
                             Sarvtra <span className="text-primary">Labs</span>
@@ -187,10 +193,11 @@ export default function LoginPage() {
 
             {/* Right Side - Background */}
             <div className="hidden lg:flex flex-1 relative bg-primary">
-                <img
-                    src={patternBg.src}
+                <Image
+                    src="/pattern-bg.jpg"
                     alt=""
-                    className="absolute inset-0 w-full h-full object-cover"
+                    fill
+                    className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-primary to-accent opacity-90" />
                 <div className="relative z-10 flex flex-col justify-center p-12 text-primary-foreground">

@@ -9,6 +9,7 @@ import {
 import PublicLayout from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import Image from 'next/image';
 
 interface CourseDetailContentProps {
     course: any; // Use the proper type from your course data
@@ -91,11 +92,12 @@ export default function CourseDetailContent({ course }: CourseDetailContentProps
                             className="lg:pl-8"
                         >
                             <div className="bg-white rounded-2xl shadow-xl border p-6 sticky top-24">
-                                <div className="aspect-video bg-muted rounded-xl mb-6 overflow-hidden">
-                                    <img
+                                <div className="aspect-video bg-muted rounded-xl mb-6 overflow-hidden relative">
+                                    <Image
                                         src="/robotics-illustration.jpg"
                                         alt={course.title}
-                                        className="w-full h-full object-cover"
+                                        fill
+                                        className="object-cover"
                                     />
                                 </div>
 

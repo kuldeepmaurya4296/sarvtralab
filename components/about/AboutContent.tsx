@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { GraduationCap, Target, Users, Trophy, Heart, Lightbulb } from 'lucide-react';
 import { teamMembers } from '@/data/content';
+import Image from 'next/image';
 
 const values = [
     {
@@ -68,12 +69,13 @@ export default function AboutContent() {
                             initial={{ opacity: 0, x: -20 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
-                            className="bg-muted aspect-video rounded-2xl shadow-xl overflow-hidden"
+                            className="bg-muted aspect-video rounded-2xl shadow-xl overflow-hidden relative"
                         >
-                            <img
+                            <Image
                                 src="/students-success.jpg"
                                 alt="Students learning at Sarvtra Labs"
-                                className="w-full h-full object-cover"
+                                fill
+                                className="object-cover"
                             />
                         </motion.div>
                         <motion.div

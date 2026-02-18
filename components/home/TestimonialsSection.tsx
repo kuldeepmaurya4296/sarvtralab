@@ -2,7 +2,7 @@
 import { motion } from 'framer-motion';
 import { Star, Quote } from 'lucide-react';
 import { testimonials } from '@/data/content';
-import studentsSuccess from '@/assets/students-success.jpg';
+import Image from 'next/image';
 import {
   Carousel,
   CarouselContent,
@@ -76,11 +76,12 @@ const TestimonialsSection = () => {
 
                       {/* Author */}
                       <div className="flex items-center gap-4 pt-4 border-t mt-auto">
-                        <div className="w-12 h-12 rounded-full bg-muted overflow-hidden shrink-0">
-                          <img
+                        <div className="w-12 h-12 rounded-full bg-muted overflow-hidden shrink-0 relative">
+                          <Image
                             src={testimonial.avatar}
                             alt={testimonial.name}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                           />
                         </div>
                         <div>

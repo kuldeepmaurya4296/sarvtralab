@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Play, Eye } from 'lucide-react';
 import { showcaseVideos, Video } from '@/data/content';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import Image from 'next/image';
 
 const VideosSection = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -76,13 +77,14 @@ const VideosSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="video-thumbnail aspect-video cursor-pointer hover:scale-[1.02] transition-transform"
+              className="video-thumbnail aspect-video cursor-pointer hover:scale-[1.02] transition-transform relative overflow-hidden"
               onClick={() => setActiveVideo(video)}
             >
-              <img
+              <Image
                 src={video.thumbnail}
                 alt={video.title}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
 
               {/* Play Button */}
