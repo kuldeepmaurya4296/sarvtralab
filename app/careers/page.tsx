@@ -5,8 +5,22 @@ import PublicLayout from '@/components/layout/PublicLayout';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { jobs } from '@/data/content';
+import { useNotifications } from '@/context/NotificationContext';
+import { toast } from 'sonner';
 
 export default function CareersPage() {
+    const { notifyAdmin } = useNotifications();
+
+    const handleApply = (jobTitle: string) => {
+        toast.success(`Application for ${jobTitle} submitted successfully!`);
+        notifyAdmin(
+            'New Job Application',
+            `Someone has applied for the ${jobTitle} position.`,
+            'info',
+            '/admin/dashboard'
+        );
+    };
+
     return (
         <PublicLayout>
             <section className="pt-32 pb-16 bg-muted/50">
@@ -57,7 +71,12 @@ export default function CareersPage() {
                                     </div>
                                     <p className="text-sm mt-3 text-foreground/80">{job.description}</p>
                                 </div>
-                                <Button className="shrink-0">Apply Now</Button>
+                                <Button
+                                    className="shrink-0"
+                                    onClick={() => handleApply(job.title)}
+                                >
+                                    Apply Now
+                                </Button>
                             </motion.div>
                         ))}
                     </div>

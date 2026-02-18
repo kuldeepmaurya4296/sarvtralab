@@ -11,16 +11,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { contactCards, organizationDetails } from '@/data/organization'; // Dynamic data
+import { useNotifications } from '@/context/NotificationContext';
 
-// Mapping icon strings to components for ContactPage specific rendering if needed, 
-// though we can just import from lucide-react in the map loop if we are sure about the strings.
-// A safer way is to have a small helper component or map.
 import * as Icons from 'lucide-react';
 
 const IconComponent = ({ name, className }: { name: string; className?: string }) => {
-    const Icon = (Icons as any)[name];
-    if (!Icon) return null;
-    return <Icon className={className} />;
+    // @ts-ignore
+    const Icon = Icons[name];
+    return Icon ? <Icon className={className} /> : null;
 };
 
 export default function ContactPage() {
@@ -34,6 +32,8 @@ export default function ContactPage() {
     });
     const [submitted, setSubmitted] = useState(false);
 
+    const { notifyAdmin } = useNotifications();
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         // Simulate API call
@@ -42,6 +42,15 @@ export default function ContactPage() {
                 title: 'Message Sent!',
                 description: 'Thank you for reaching out. We\'ll get back to you within 24 hours.',
             });
+
+            // Notify Admin
+            notifyAdmin(
+                'New Contact Inquiry',
+                `Inquiry from ${formData.name} regarding: ${formData.subject}`,
+                'info',
+                '/admin/help-support'
+            );
+
             setSubmitted(true);
             setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
         }, 1000);

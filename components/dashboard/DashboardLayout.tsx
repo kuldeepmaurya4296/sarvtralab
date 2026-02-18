@@ -1,7 +1,9 @@
 'use client';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useNotifications } from '@/context/NotificationContext';
+import NotificationDropdown from './NotificationDropdown';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -28,12 +30,13 @@ import { Button } from '@/components/ui/button';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  role: 'student' | 'school' | 'govt' | 'admin';
+  role: 'student' | 'school' | 'govt' | 'admin' | 'superadmin' | 'teacher' | 'helpsupport';
   userName: string;
   userEmail: string;
+  hideSidebar?: boolean;
 }
 
-const roleMenuItems = {
+const roleMenuItems: Record<string, any[]> = {
   student: [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/student/dashboard' },
     { icon: BookOpen, label: 'My Courses', href: '/student/courses' },
@@ -67,33 +70,69 @@ const roleMenuItems = {
     { icon: FileText, label: 'Content', href: '/admin/content' },
     { icon: Shield, label: 'Govt Orgs', href: '/admin/govt' },
     { icon: Settings, label: 'Settings', href: '/admin/settings' }
+  ],
+  superadmin: [
+    { icon: LayoutDashboard, label: 'Dashboard', href: '/admin/dashboard' },
+    { icon: School, label: 'Schools', href: '/admin/schools' },
+    { icon: Users, label: 'Students', href: '/admin/students' },
+    { icon: GraduationCap, label: 'Teachers', href: '/admin/teachers' },
+    { icon: Headphones, label: 'Help Support', href: '/admin/help-support' },
+    { icon: BookOpen, label: 'Courses', href: '/admin/courses' },
+    { icon: Award, label: 'Certificates', href: '/admin/certificates' },
+    { icon: FileText, label: 'Content', href: '/admin/content' },
+    { icon: Shield, label: 'Govt Orgs', href: '/admin/govt' },
+    { icon: Settings, label: 'Settings', href: '/admin/settings' }
   ]
 };
 
-const roleColors = {
+const roleColors: Record<string, string> = {
   student: 'from-primary to-accent',
   school: 'from-secondary to-primary',
   govt: 'from-accent to-success',
-  admin: 'from-primary to-secondary'
+  admin: 'from-primary to-secondary',
+  superadmin: 'from-primary to-secondary',
+  teacher: 'from-primary to-accent',
+  helpsupport: 'from-accent to-success'
 };
 
-const roleLabels = {
+const roleLabels: Record<string, string> = {
   student: 'Student Portal',
   school: 'School Portal',
   govt: 'Govt Portal',
-  admin: 'Super Admin'
+  admin: 'Super Admin',
+  superadmin: 'Super Admin',
+  teacher: 'Teacher Portal',
+  helpsupport: 'Support Portal'
 };
 
-const DashboardLayout = ({ children, role, userName, userEmail }: DashboardLayoutProps) => {
+const DashboardLayout = ({ children, role, userName, userEmail, hideSidebar = false }: DashboardLayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const { unreadCount } = useNotifications();
   const pathname = usePathname();
   const router = useRouter();
 
   const { logout } = useAuth();
+  const menuItems = roleMenuItems[role] || roleMenuItems['student'];
 
-  const menuItems = roleMenuItems[role];
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setNotificationOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -102,65 +141,69 @@ const DashboardLayout = ({ children, role, userName, userEmail }: DashboardLayou
   return (
     <div className="min-h-screen bg-background flex">
       {/* Sidebar - Desktop */}
-      <aside
-        className={`hidden lg:flex flex-col fixed left-0 top-0 h-full bg-sidebar text-sidebar-foreground z-40 transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'
-          }`}
-      >
-        {/* Logo */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
-          <Link href="/" className="flex items-center gap-2">
-
-            {sidebarOpen && (
-              <span className="font-display text-lg font-bold">
-                Sarvtra <span className="text-sidebar-primary">Labs</span>
-              </span>
-            )}
-          </Link>
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Role Badge */}
-        {sidebarOpen && (
-          <div className="px-4 py-3">
-            <div className={`px-3 py-2 rounded-lg bg-gradient-to-r ${roleColors[role]} text-primary-foreground text-xs font-semibold text-center`}>
-              {roleLabels[role]}
-            </div>
+      {!hideSidebar && (
+        <aside
+          className={`hidden lg:flex flex-col fixed left-0 top-0 h-full bg-sidebar text-sidebar-foreground z-40 transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'
+            }`}
+        >
+          {/* Logo */}
+          <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white flex-shrink-0">
+                <img src="/logo.jpeg" alt="Sarvtra Labs" className="w-full h-full object-cover" />
+              </div>
+              {sidebarOpen && (
+                <span className="font-display text-lg font-bold">
+                  Sarvtra <span className="text-sidebar-primary">Labs</span>
+                </span>
+              )}
+            </Link>
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="p-2 rounded-lg hover:bg-sidebar-accent transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
           </div>
-        )}
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {menuItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`sidebar-link ${isActive ? 'active' : ''} ${!sidebarOpen ? 'justify-center' : ''}`}
-              >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                {sidebarOpen && <span>{item.label}</span>}
-              </Link>
-            );
-          })}
-        </nav>
+          {/* Role Badge */}
+          {sidebarOpen && (
+            <div className="px-4 py-3">
+              <div className={`px-3 py-2 rounded-lg bg-gradient-to-r ${roleColors[role] || roleColors['student']} text-primary-foreground text-xs font-semibold text-center`}>
+                {roleLabels[role] || roleLabels['student']}
+              </div>
+            </div>
+          )}
 
-        {/* Logout Button */}
-        <div className="p-3 border-t border-sidebar-border">
-          <button
-            onClick={handleLogout}
-            className={`sidebar-link w-full text-destructive hover:bg-destructive/10 ${!sidebarOpen ? 'justify-center' : ''}`}
-          >
-            <LogOut className="w-5 h-5" />
-            {sidebarOpen && <span>Logout</span>}
-          </button>
-        </div>
-      </aside>
+          {/* Navigation */}
+          <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+            {menuItems.map((item: any) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`sidebar-link ${isActive ? 'active' : ''} ${!sidebarOpen ? 'justify-center' : ''}`}
+                >
+                  <item.icon className="w-5 h-5 flex-shrink-0" />
+                  {sidebarOpen && <span>{item.label}</span>}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Logout Button */}
+          <div className="p-3 border-t border-sidebar-border">
+            <button
+              onClick={handleLogout}
+              className={`sidebar-link w-full text-destructive hover:bg-destructive/10 ${!sidebarOpen ? 'justify-center' : ''}`}
+            >
+              <LogOut className="w-5 h-5" />
+              {sidebarOpen && <span>Logout</span>}
+            </button>
+          </div>
+        </aside>
+      )}
 
       {/* Mobile Sidebar */}
       <AnimatePresence>
@@ -198,13 +241,13 @@ const DashboardLayout = ({ children, role, userName, userEmail }: DashboardLayou
               </div>
 
               <div className="px-4 py-3">
-                <div className={`px-3 py-2 rounded-lg bg-gradient-to-r ${roleColors[role]} text-primary-foreground text-xs font-semibold text-center`}>
-                  {roleLabels[role]}
+                <div className={`px-3 py-2 rounded-lg bg-gradient-to-r ${roleColors[role] || roleColors['student']} text-primary-foreground text-xs font-semibold text-center`}>
+                  {roleLabels[role] || roleLabels['student']}
                 </div>
               </div>
 
               <nav className="flex-1 px-3 py-4 space-y-1">
-                {menuItems.map((item) => {
+                {menuItems.map((item: any) => {
                   const isActive = pathname === item.href;
                   return (
                     <Link
@@ -235,7 +278,7 @@ const DashboardLayout = ({ children, role, userName, userEmail }: DashboardLayou
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${(!sidebarOpen || hideSidebar) ? 'lg:ml-0' : 'lg:ml-64'} ${!sidebarOpen && !hideSidebar ? 'lg:ml-20' : ''}`}>
         {/* Header */}
         <header className="h-16 bg-card border-b flex items-center justify-between px-4 md:px-6 sticky top-0 z-30">
           <div className="flex items-center gap-4">
@@ -246,19 +289,32 @@ const DashboardLayout = ({ children, role, userName, userEmail }: DashboardLayou
               <Menu className="w-5 h-5" />
             </button>
             <h1 className="text-lg font-semibold text-foreground hidden md:block">
-              {menuItems.find(item => item.href === pathname)?.label || 'Dashboard'}
+              {menuItems.find((item: any) => item.href === pathname)?.label || 'Dashboard'}
             </h1>
           </div>
 
           <div className="flex items-center gap-3">
             {/* Notifications */}
-            <button className="relative p-2 rounded-lg hover:bg-muted transition-colors">
-              <Bell className="w-5 h-5 text-muted-foreground" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
-            </button>
+            <div className="relative" ref={notificationRef}>
+              <button
+                onClick={() => setNotificationOpen(!notificationOpen)}
+                className="relative p-2 rounded-lg hover:bg-muted transition-colors"
+                aria-label="Toggle notifications"
+              >
+                <Bell className="w-5 h-5 text-muted-foreground" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full" />
+                )}
+              </button>
+              <AnimatePresence>
+                {notificationOpen && (
+                  <NotificationDropdown onClose={() => setNotificationOpen(false)} />
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Profile Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted transition-colors"

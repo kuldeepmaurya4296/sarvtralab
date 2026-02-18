@@ -3,20 +3,44 @@
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { mockStudents } from '@/data/users';
 import { organizationDetails } from '@/data/organization';
-import { Mail, Phone, Clock, Construction } from 'lucide-react';
+import { Mail, Phone, Clock, Construction, LifeBuoy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNotifications } from '@/context/NotificationContext';
+import { toast } from 'sonner';
 
 export default function StudentSupportPage() {
     const student = mockStudents.find(s => s.id === 'std-001');
+    const { notifyAdmin, addNotification } = useNotifications();
 
     if (!student) return <div>Loading...</div>;
+
+    const handleCreateTicket = () => {
+        toast.success("Support ticket created!");
+        addNotification(
+            'Support Ticket Submitted',
+            'Your ticket #T-102 has been received and is being reviewed.',
+            'success'
+        );
+        notifyAdmin(
+            'New Support Ticket',
+            `${student.name} has submitted a new support ticket.`,
+            'warning',
+            '/admin/help-support'
+        );
+    };
 
     return (
         <DashboardLayout role="student" userName={student.name} userEmail={student.email}>
             <div className="space-y-6">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">Help & Support</h1>
-                    <p className="text-muted-foreground">Need assistance? Here's how you can reach us.</p>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-foreground">Help & Support</h1>
+                        <p className="text-muted-foreground">Need assistance? Here's how you can reach us.</p>
+                    </div>
+                    <Button onClick={handleCreateTicket} className="gap-2">
+                        <LifeBuoy className="w-4 h-4" />
+                        Create Support Ticket
+                    </Button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
