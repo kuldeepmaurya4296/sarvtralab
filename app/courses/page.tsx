@@ -4,8 +4,7 @@ import CoursesContent from '@/components/courses/CoursesList';
 import { constructMetadata } from '@/lib/seo';
 import { Metadata } from 'next';
 import { CourseListSchema } from '@/components/seo/CourseListSchema';
-import { courses } from '@/data/courses';
-
+import { getAllCourses } from '@/lib/actions/course.actions';
 import { SEO_KEYWORDS } from '@/lib/seo';
 
 export const metadata: Metadata = constructMetadata({
@@ -18,12 +17,14 @@ export const metadata: Metadata = constructMetadata({
     ],
 });
 
-export default function CoursesPage() {
+export default async function CoursesPage() {
+    const courses = await getAllCourses();
+
     return (
         <PublicLayout>
             <CourseListSchema courses={courses} />
             <Suspense fallback={<div className="pt-32 pb-16 text-center">Loading courses...</div>}>
-                <CoursesContent />
+                <CoursesContent initialCourses={courses} />
             </Suspense>
         </PublicLayout>
     );

@@ -6,26 +6,50 @@ import StatCard from '@/components/dashboard/StatCard';
 import FilterTabs from '@/components/dashboard/FilterTabs';
 import { ChartCard, AreaChartComponent, BarChartComponent } from '@/components/dashboard/Charts';
 import { monthlyData, gradeDistribution } from '@/data/analytics';
-import { db } from '@/data/services/database';
+import { getGovtDashboardStats } from '@/lib/actions/dashboard.actions';
 import { GovtOrg } from '@/data/users';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
+
 export default function GovtDashboardPage() {
-    const { user, isLoading } = useAuth();
+    const { user, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
     const [period, setPeriod] = useState('Monthly');
+    const [stats, setStats] = useState<any>(null);
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== 'govt')) {
+        if (!isAuthLoading && (!user || user.role !== 'govt')) {
             router.push('/login');
         }
-    }, [user, isLoading, router]);
+    }, [user, isAuthLoading, router]);
 
-    if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    useEffect(() => {
+        const fetchStats = async () => {
+            if (user?.role === 'govt') {
+                try {
+                    const data = await getGovtDashboardStats();
+                    setStats(data);
+                } catch (e) {
+                    console.error("Failed to load govt stats", e);
+                } finally {
+                    setIsLoadingData(false);
+                }
+            }
+        };
+
+        if (user && !isAuthLoading) {
+            fetchStats();
+        }
+    }, [user, isAuthLoading]);
+
+    if (isAuthLoading || isLoadingData) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     if (!user || user.role !== 'govt') return null;
+    if (!stats) return <div>Error loading data.</div>;
 
     const govtOrg = user as GovtOrg;
+    const { totalSchools, totalStudents, schools } = stats;
 
     return (
         <DashboardLayout role="govt" userName={govtOrg.name} userEmail={govtOrg.email}>
@@ -39,8 +63,8 @@ export default function GovtDashboardPage() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard icon={Building} title="Schools Under Jurisdiction" value={db.schools.count()} color="primary" />
-                    <StatCard icon={Users} title="Total Students" value="5,500" change="+320" changeType="positive" color="secondary" />
+                    <StatCard icon={Building} title="Schools Under Jurisdiction" value={totalSchools} color="primary" />
+                    <StatCard icon={Users} title="Total Students" value={totalStudents.toLocaleString()} change="+320" changeType="positive" color="secondary" />
                     <StatCard icon={TrendingUp} title="Avg Completion Rate" value="72%" color="success" />
                     <StatCard icon={FileText} title="Reports Generated" value={24} color="accent" />
                 </div>
@@ -62,7 +86,7 @@ export default function GovtDashboardPage() {
                                 <th className="pb-3 px-2">School Name</th><th className="pb-3 px-2">City</th><th className="pb-3 px-2">Students</th><th className="pb-3 px-2">Status</th>
                             </tr></thead>
                             <tbody>
-                                {db.schools.find().map((school) => (
+                                {schools.map((school: any) => (
                                     <tr key={school.id} className="border-b last:border-0 hover:bg-muted/50 transition-colors">
                                         <td className="py-3 px-2 font-medium">{school.name}</td>
                                         <td className="py-3 px-2 text-muted-foreground">{school.city}</td>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Search,
     BookOpen,
@@ -8,27 +8,22 @@ import {
     Users,
     Star,
     ChevronRight,
-    Filter,
     PlayCircle,
     FileText,
     Award,
     BarChart,
     CheckCircle2,
-    Calendar,
     GraduationCap
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSchools } from '@/data/users';
-import { courses } from '@/data/courses'; // Ensure this data structure is compatible or mock it if needed
+import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
     Card,
     CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription,
     CardFooter
 } from '@/components/ui/card';
 import {
@@ -41,42 +36,86 @@ import {
 import {
     Sheet,
     SheetContent,
-    SheetDescription,
     SheetHeader,
     SheetTitle,
-    SheetTrigger,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Progress } from "@/components/ui/progress";
+import { toast } from "sonner";
 
-// Mock data extension - using deterministic values to avoid hydration mismatches
-const extendedCourses = courses.map((c, i) => ({
-    ...c,
-    progress: ((i * 37 + 13) % 100),  // deterministic pseudo-random based on index
-    lastAccessed: `${((i * 3 + 1) % 28) + 1} days ago`,
-    modules: [
-        { title: "Introduction to the Course", duration: "10 min", status: "completed" },
-        { title: "Core Concepts - Part 1", duration: "45 min", status: "in-progress" },
-        { title: "Core Concepts - Part 2", duration: "50 min", status: "locked" },
-        { title: "Advanced Topics", duration: "60 min", status: "locked" },
-        { title: "Final Assessment", duration: "30 min", status: "locked" },
-    ]
-}));
+import { getAllCourses } from '@/lib/actions/course.actions';
+import { getSchoolById } from '@/lib/actions/school.actions';
 
 export default function SchoolCoursesPage() {
-    const school = mockSchools[0];
-    // In a real app, you'd filter by school ID, but for now we'll show all or a subset
-    const myCourses = extendedCourses;
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
+
+    const [school, setSchool] = useState<any>(null);
+    const [myCourses, setMyCourses] = useState<any[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [levelFilter, setLevelFilter] = useState('all');
     const [selectedCourse, setSelectedCourse] = useState<any>(null);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
+    useEffect(() => {
+        if (!isAuthLoading && (!user || user.role !== 'school')) {
+            router.push('/login');
+        }
+    }, [user, isAuthLoading, router]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            if (user?.role === 'school') {
+                try {
+                    const [currentSchool, allCourses] = await Promise.all([
+                        getSchoolById(user.id),
+                        getAllCourses()
+                    ]);
+
+                    if (currentSchool) {
+                        setSchool(currentSchool);
+
+                        // Extend courses with UI-specific properties
+                        const extended = allCourses.map((c: any, i) => ({
+                            ...c,
+                            progress: ((i * 37 + 13) % 100),
+                            lastAccessed: `${((i * 3 + 1) % 28) + 1} days ago`,
+                            rating: c.rating || "4.5",
+                            studentsEnrolled: c.studentsEnrolled || 120 + (i * 10),
+                            grade: c.grade || "Grade 10",
+                            modules: c.curriculum && c.curriculum.length > 0
+                                ? c.curriculum.map((m: any) => ({ ...m, status: 'locked' }))
+                                : [
+                                    { title: "Introduction to the Course", duration: "10 min", status: "completed" },
+                                    { title: "Core Concepts - Part 1", duration: "45 min", status: "in-progress" },
+                                    { title: "Core Concepts - Part 2", duration: "50 min", status: "locked" },
+                                    { title: "Advanced Topics", duration: "60 min", status: "locked" },
+                                    { title: "Final Assessment", duration: "30 min", status: "locked" },
+                                ]
+                        }));
+                        setMyCourses(extended);
+                    } else {
+                        toast.error("School profile not found");
+                    }
+                } catch (error) {
+                    console.error("Failed to load data", error);
+                    toast.error("Failed to load data");
+                } finally {
+                    setIsLoadingData(false);
+                }
+            }
+        };
+
+        if (user && !isAuthLoading) loadData();
+    }, [user, isAuthLoading]);
+
+
     const filteredCourses = myCourses.filter(course => {
-        const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesLevel = levelFilter === 'all' || course.level === levelFilter; // data/courses usually has 'level'
+        const matchesSearch = course.title?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesLevel = levelFilter === 'all' || course.level === levelFilter;
         return matchesSearch && matchesLevel;
     });
 
@@ -84,6 +123,10 @@ export default function SchoolCoursesPage() {
         setSelectedCourse(course);
         setIsSheetOpen(true);
     };
+
+    if (isAuthLoading || isLoadingData || !school) {
+        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    }
 
     return (
         <DashboardLayout role="school" userName={school.name} userEmail={school.email}>

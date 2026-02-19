@@ -1,0 +1,47 @@
+
+'use server';
+
+import connectToDatabase from '@/lib/mongoose';
+import Certificate from '@/lib/models/Certificate';
+import { Certificate as CertificateType } from '@/data/certificates';
+
+const clean = (doc: any) => {
+    if (!doc) return null;
+    const { _id, ...rest } = doc;
+    return { ...rest, id: doc.id };
+}
+
+export async function getAllCertificates(): Promise<CertificateType[]> {
+    await connectToDatabase();
+    const certs = await Certificate.find({}).lean();
+    return certs.map(clean) as CertificateType[];
+}
+
+export async function getStudentCertificates(studentId: string): Promise<CertificateType[]> {
+    await connectToDatabase();
+    const certs = await Certificate.find({ studentId }).lean();
+    return certs.map(clean) as CertificateType[];
+}
+
+export async function getCertificateCount(studentId: string): Promise<number> {
+    await connectToDatabase();
+    return await Certificate.countDocuments({ studentId });
+}
+
+export async function issueCertificate(data: { studentId: string, courseId: string, issueDate: string }): Promise<CertificateType | null> {
+    await connectToDatabase();
+    try {
+        const id = `cert-${Date.now()}`;
+        const newCert = await Certificate.create({
+            ...data,
+            id,
+            certificateId: id, // Using same for now
+            grade: 'A', // Default or calculate
+            comments: 'Outstanding Performance'
+        });
+        return clean(newCert.toObject()) as CertificateType;
+    } catch (e) {
+        console.error("Issue Certificate Error:", e);
+        return null; // Return null on error, caller handles it
+    }
+}

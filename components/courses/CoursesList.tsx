@@ -7,10 +7,19 @@ import { motion } from 'framer-motion';
 import { Clock, Users, Star, ArrowRight, IndianRupee, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { courses, courseCategories } from '@/data/courses';
 import Image from 'next/image';
 
-const CoursesContent = () => {
+const courseCategories = [
+    { id: 'foundation', name: 'Foundation Maker', grades: 'Class 4-6', color: 'primary' },
+    { id: 'intermediate', name: 'Intermediate Robotics', grades: 'Class 7-10', color: 'secondary' },
+    { id: 'advanced', name: 'Advanced Pre-Engineering', grades: 'Class 11-12', color: 'accent' }
+];
+
+interface CoursesContentProps {
+    initialCourses: any[];
+}
+
+const CoursesContent = ({ initialCourses }: CoursesContentProps) => {
     const searchParams = useSearchParams();
     const [searchQuery, setSearchQuery] = useState('');
     const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -24,13 +33,13 @@ const CoursesContent = () => {
     }, [searchQuery]);
 
     const filteredCourses = useMemo(() => {
-        return courses.filter((course) => {
+        return initialCourses.filter((course) => {
             const matchesCategory = activeCategory === 'all' || course.category === activeCategory;
-            const matchesSearch = course.title.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
-                course.description.toLowerCase().includes(debouncedQuery.toLowerCase());
+            const matchesSearch = course.title?.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
+                course.description?.toLowerCase().includes(debouncedQuery.toLowerCase());
             return matchesCategory && matchesSearch;
         });
-    }, [activeCategory, debouncedQuery]);
+    }, [activeCategory, debouncedQuery, initialCourses]);
 
     return (
         <>
@@ -118,7 +127,7 @@ const CoursesContent = () => {
                             >
                                 <div className="relative h-48 bg-muted overflow-hidden">
                                     <Image
-                                        src="/robotics-illustration.jpg"
+                                        src="/robotics-illustration.jpg" // Keeping static image for now as DB might not have real URLs
                                         alt={`Cover image for ${course.title}`}
                                         fill
                                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -155,15 +164,15 @@ const CoursesContent = () => {
                                     <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                                         <div className="flex items-center gap-1">
                                             <Clock className="w-4 h-4" />
-                                            <span>{course.totalHours} hrs</span>
+                                            <span>{course.totalHours || 0} hrs</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <Users className="w-4 h-4" />
-                                            <span>{course.studentsEnrolled.toLocaleString()}</span>
+                                            <span>{(course.studentsEnrolled || 0).toLocaleString()}</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <Star className="w-4 h-4 fill-orange-400 text-orange-400" />
-                                            <span>{course.rating}</span>
+                                            <span>{course.rating || 'N/A'}</span>
                                         </div>
                                     </div>
 
@@ -171,12 +180,16 @@ const CoursesContent = () => {
                                         <div>
                                             <span className="sr-only">Current price:</span>
                                             <span className="text-2xl font-bold text-foreground">
-                                                ₹{course.price.toLocaleString()}
+                                                ₹{(course.price || 0).toLocaleString()}
                                             </span>
-                                            <span className="sr-only">Original price:</span>
-                                            <span className="text-sm text-muted-foreground line-through ml-2">
-                                                ₹{course.originalPrice.toLocaleString()}
-                                            </span>
+                                            {course.originalPrice && (
+                                                <>
+                                                    <span className="sr-only">Original price:</span>
+                                                    <span className="text-sm text-muted-foreground line-through ml-2">
+                                                        ₹{course.originalPrice.toLocaleString()}
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
                                         <Link href={`/courses/${course.id}`}>
                                             <Button size="sm" variant="outline" className="gap-1">
@@ -187,7 +200,7 @@ const CoursesContent = () => {
 
                                     {course.emiAvailable && (
                                         <p className="text-xs text-green-600 mt-2 font-medium">
-                                            EMI from ₹{course.emiAmount?.toLocaleString()}/month
+                                            EMI from ₹{(course.emiAmount || 0).toLocaleString()}/month
                                         </p>
                                     )}
                                 </div>

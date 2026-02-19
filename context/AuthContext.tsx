@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { db } from '@/data/services/database';
-import { User, UserRole, mockSuperAdmin } from '@/data/users';
+import { loginUser } from '@/lib/actions/auth.actions';
+import { User, UserRole } from '@/data/users';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -39,54 +39,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
     }, []);
 
+
     const login = async (email: string, pass: string): Promise<boolean> => {
         setIsLoading(true);
         try {
-            // 1. Check Students
-            const student = db.students.find(s => s.email === email && s.password === pass)[0];
-            if (student) {
-                handleSuccess(student);
-                return true;
-            }
+            const user = await loginUser(email, pass);
 
-            // 2. Check Schools
-            const school = db.schools.find(s => s.email === email && s.password === pass)[0];
-            if (school) {
-                handleSuccess(school);
-                return true;
-            }
-
-            // 3. Check Teachers
-            const teacher = db.teachers.find(s => s.email === email && s.password === pass)[0];
-            if (teacher) {
-                handleSuccess(teacher);
-                return true;
-            }
-
-            // 4. Check Govt
-            const govt = db.govt.find(s => s.email === email && s.password === pass)[0];
-            if (govt) {
-                handleSuccess(govt);
-                return true;
-            }
-
-            // 5. Check SuperAdmin (Single Object)
-            if (mockSuperAdmin.email === email && mockSuperAdmin.password === pass) {
-                handleSuccess(mockSuperAdmin);
-                return true;
-            }
-
-            // 6. Check HelpSupport
-            const support = db.support.find(s => s.email === email && s.password === pass)[0];
-            if (support) {
-                handleSuccess(support);
+            if (user) {
+                handleSuccess(user);
                 return true;
             }
 
             toast.error('Invalid credentials');
             return false;
         } catch (error) {
-            console.error(error);
+            console.error("Login Error:", error);
             toast.error('Login failed');
             return false;
         } finally {

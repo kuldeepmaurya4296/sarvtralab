@@ -1,27 +1,66 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Download, Plus, User } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSchools, mockStudents } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 
-import { StudentService } from '@/data/services/student.service';
-import { SchoolService } from '@/data/services/school.service';
+
+import { getAllStudents, createStudent, updateStudent, deleteStudent } from '@/lib/actions/student.actions';
+import { getSchoolById } from '@/lib/actions/school.actions'; // Ensure this exists
 import { SchoolStudentTable } from '@/components/school/students/SchoolStudentTable';
 import { SchoolStudentViewSheet } from '@/components/school/students/SchoolStudentViewSheet';
 import { SchoolStudentFormSheet } from '@/components/school/students/SchoolStudentFormSheet';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 export default function SchoolStudentsPage() {
-    const school = SchoolService.getAll()[0];
-    const [students, setStudents] = useState(StudentService.getAll().filter(s => s.schoolId === school.id));
-    const uniqueGrades = Array.from(new Set(students.map(s => s.grade))).sort();
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
 
+    const [school, setSchool] = useState<any>(null);
+    const [students, setStudents] = useState<any[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+
+    useEffect(() => {
+        if (!isAuthLoading && (!user || user.role !== 'school')) {
+            router.push('/login');
+        }
+    }, [user, isAuthLoading, router]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            if (user?.role === 'school') {
+                try {
+                    const [currentSchool, allStudents] = await Promise.all([
+                        getSchoolById(user.id),
+                        getAllStudents(user.id)
+                    ]);
+
+                    if (currentSchool) {
+                        setSchool(currentSchool);
+                        setStudents(allStudents);
+                    } else {
+                        toast.error("School profile not found");
+                    }
+                } catch (error) {
+                    console.error("Failed to load data", error);
+                    toast.error("Failed to load data");
+                } finally {
+                    setIsLoadingData(false);
+                }
+            }
+        };
+
+        if (user && !isAuthLoading) loadData();
+    }, [user, isAuthLoading]);
+
+    const uniqueGrades = Array.from(new Set(students.map(s => s.grade))).sort();
     const [searchQuery, setSearchQuery] = useState('');
     const [gradeFilter, setGradeFilter] = useState('all');
 
@@ -33,14 +72,15 @@ export default function SchoolStudentsPage() {
 
     const filteredStudents = students.filter(student => {
         const matchesSearch =
-            student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            student.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            student.parentName.toLowerCase().includes(searchQuery.toLowerCase());
+            student.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            student.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            student.parentName?.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesGrade = gradeFilter === 'all' || student.grade === gradeFilter;
         return matchesSearch && matchesGrade;
     });
 
     const handleExport = () => {
+        if (!students.length) return;
         const headers = ['ID', 'Name', 'Email', 'Grade', 'Parent Name', 'Parent Phone', 'Status'];
         const csvContent = [
             headers.join(','),
@@ -57,50 +97,71 @@ export default function SchoolStudentsPage() {
         toast.success("Exported student list");
     };
 
-    const handleAddStudent = (formData: any) => {
-        const newStudent = StudentService.create({
-            ...formData,
-            schoolId: school.id,
-            schoolName: school.name,
-            enrolledCourses: [],
-            completedCourses: [],
-            city: school.city,
-            state: school.state,
-            role: 'student'
-        });
+    const handleAddStudent = async (formData: any) => {
+        if (!school) return;
 
-        if (newStudent) {
-            setStudents([newStudent, ...students]);
-            toast.success("Student enrolled successfully");
+        try {
+            const newStudent = await createStudent({
+                ...formData,
+                schoolId: school.id,
+                schoolName: school.name,
+                city: school.city,
+                state: school.state,
+                role: 'student', // Ensure role is set
+                enrolledCourses: [],
+                completedCourses: [],
+                status: 'active'
+            });
+
+            if (newStudent) {
+                setStudents(prev => [newStudent, ...prev]);
+                toast.success("Student enrolled successfully");
+                setIsAddOpen(false);
+            }
+        } catch (e) {
+            toast.error("Failed to enroll student");
         }
     };
 
-    const handleEditSave = (formData: any) => {
+    const handleEditSave = async (formData: any) => {
         if (!selectedStudent) return;
-        const updated = StudentService.update(selectedStudent.id, {
-            ...formData,
-            status: formData.status as 'active' | 'inactive'
-        });
+        try {
+            const updated = await updateStudent(selectedStudent.id, {
+                ...formData,
+                status: formData.status as 'active' | 'inactive'
+            });
 
-        if (updated) {
-            setStudents(students.map(s => s.id === selectedStudent.id ? updated : s));
-            toast.success("Student details updated");
+            if (updated) {
+                setStudents(prev => prev.map(s => s.id === selectedStudent.id ? updated : s));
+                toast.success("Student details updated");
+                setIsEditOpen(false);
+            }
+        } catch (e) {
+            toast.error("Failed to update student");
         }
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!selectedStudent) return;
-        const success = StudentService.delete(selectedStudent.id);
-        if (success) {
-            setStudents(students.filter(s => s.id !== selectedStudent.id));
-            setIsDeleteOpen(false);
-            toast.success("Student removed from school registry");
+        try {
+            const success = await deleteStudent(selectedStudent.id);
+            if (success) {
+                setStudents(prev => prev.filter(s => s.id !== selectedStudent.id));
+                setIsDeleteOpen(false);
+                toast.success("Student removed from school registry");
+            }
+        } catch (e) {
+            toast.error("Failed to remove student");
         }
     };
 
     const openView = (student: any) => { setSelectedStudent(student); setIsViewOpen(true); };
     const openEdit = (student: any) => { setSelectedStudent(student); setIsEditOpen(true); };
     const openDelete = (student: any) => { setSelectedStudent(student); setIsDeleteOpen(true); };
+
+    if (isAuthLoading || isLoadingData || !school) {
+        return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    }
 
     return (
         <DashboardLayout role="school" userName={school.name} userEmail={school.email}>

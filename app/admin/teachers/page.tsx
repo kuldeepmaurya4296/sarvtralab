@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Download, Plus, GraduationCap } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSuperAdmin, Teacher } from '@/data/users';
-import { TeacherService } from '@/data/services/teacher.service';
+import { useAuth } from '@/context/AuthContext';
+import { Teacher, School, SuperAdmin } from '@/data/users';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +17,11 @@ import {
 } from '@/components/ui/card';
 import { toast } from 'sonner';
 
-// Refactored Components
+// Actions
+import { getAllTeachers, createTeacher, updateTeacher, deleteTeacher, assignSchools } from '@/lib/actions/teacher.actions';
+import { getAllSchools } from '@/lib/actions/school.actions';
+
+// Components
 import { TeacherTable } from '@/components/admin/teachers/TeacherTable';
 import { TeacherViewSheet } from '@/components/admin/teachers/TeacherViewSheet';
 import { TeacherFormSheet } from '@/components/admin/teachers/TeacherFormSheet';
@@ -24,9 +29,13 @@ import { TeacherAssignDialog } from '@/components/admin/teachers/TeacherAssignDi
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 export default function AdminTeachersPage() {
-    const admin = mockSuperAdmin;
-    const [teachers, setTeachers] = useState<Teacher[]>(TeacherService.getAll());
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
+
+    const [teachers, setTeachers] = useState<Teacher[]>([]);
+    const [schools, setSchools] = useState<School[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     // UI States
     const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
@@ -36,6 +45,34 @@ export default function AdminTeachersPage() {
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [isAssignOpen, setIsAssignOpen] = useState(false);
 
+    useEffect(() => {
+        if (!isAuthLoading && (!user || user.role !== 'superadmin')) {
+            router.push('/login');
+        }
+    }, [user, isAuthLoading, router]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            if (user?.role === 'superadmin') {
+                try {
+                    const [teachersData, schoolsData] = await Promise.all([
+                        getAllTeachers(),
+                        getAllSchools()
+                    ]);
+                    setTeachers(teachersData);
+                    setSchools(schoolsData);
+                } catch (error) {
+                    console.error("Failed to load data", error);
+                    toast.error("Failed to load data");
+                } finally {
+                    setIsLoadingData(false);
+                }
+            }
+        };
+
+        if (user && !isAuthLoading) loadData();
+    }, [user, isAuthLoading]);
+
     const filteredTeachers = teachers.filter(teacher =>
         teacher.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         teacher.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -43,46 +80,69 @@ export default function AdminTeachersPage() {
     );
 
     // Handlers
-    const handleAddTeacher = (formData: any) => {
-        const createdTeacher = TeacherService.create({
-            ...formData,
-            password: 'password123',
-            status: formData.status as 'active' | 'inactive',
-            role: 'teacher',
-            assignedSchools: [],
-            assignedCourses: []
-        });
+    const handleAddTeacher = async (formData: any) => {
+        try {
+            const createdTeacher = await createTeacher({
+                ...formData,
+                password: 'password123', // Default password logic
+                role: 'teacher',
+                assignedSchools: [],
+                assignedCourses: []
+            });
 
-        if (createdTeacher) {
-            setTeachers([createdTeacher, ...teachers]);
-            toast.success("Teacher added successfully");
+            if (createdTeacher) {
+                setTeachers(prev => [createdTeacher, ...prev]);
+                toast.success("Teacher added successfully");
+                setIsAddOpen(false);
+            }
+        } catch (error) {
+            toast.error("Failed to add teacher");
         }
     };
 
-    const handleEditSave = (formData: any) => {
+    const handleEditSave = async (formData: any) => {
         if (!selectedTeacher) return;
-        const updated = TeacherService.update(selectedTeacher.id, formData);
-        if (updated) {
-            setTeachers(teachers.map(t => t.id === selectedTeacher.id ? updated : t));
-            toast.success("Teacher details updated");
+        try {
+            const updated = await updateTeacher(selectedTeacher.id, formData);
+            if (updated) {
+                setTeachers(prev => prev.map(t => t.id === selectedTeacher.id ? updated : t));
+                toast.success("Teacher details updated");
+                setIsEditOpen(false);
+            }
+        } catch (error) {
+            toast.error("Failed to update teacher");
         }
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!selectedTeacher) return;
-        TeacherService.delete(selectedTeacher.id);
-        setTeachers(teachers.filter(t => t.id !== selectedTeacher.id));
-        setIsDeleteOpen(false);
-        toast.success("Teacher account deactivated");
+        try {
+            const success = await deleteTeacher(selectedTeacher.id);
+            if (success) {
+                setTeachers(prev => prev.filter(t => t.id !== selectedTeacher.id));
+                setIsDeleteOpen(false);
+                toast.success("Teacher account deactivated");
+            }
+        } catch (error) {
+            toast.error("Failed to delete teacher");
+        }
     };
 
-    const handleAssignSchools = (schoolIds: string[]) => {
+    const handleAssignSchools = async (schoolIds: string[]) => {
         if (!selectedTeacher) return;
-        TeacherService.assignSchools(selectedTeacher.id, schoolIds);
-        setTeachers(teachers.map(t =>
-            t.id === selectedTeacher.id ? { ...t, assignedSchools: schoolIds } : t
-        ));
-        toast.success("School assignments updated");
+        try {
+            const success = await assignSchools(selectedTeacher.id, schoolIds);
+            if (success) {
+                setTeachers(prev =>
+                    prev.map(t =>
+                        t.id === selectedTeacher.id ? { ...t, assignedSchools: schoolIds } : t
+                    )
+                );
+                toast.success("School assignments updated");
+            }
+        } catch (error) {
+            toast.error("Failed to assign schools");
+        }
     };
 
     const handleExport = () => {
@@ -108,6 +168,11 @@ export default function AdminTeachersPage() {
     const openEdit = (teacher: Teacher) => { setSelectedTeacher(teacher); setIsEditOpen(true); };
     const openAssign = (teacher: Teacher) => { setSelectedTeacher(teacher); setIsAssignOpen(true); };
     const openDelete = (teacher: Teacher) => { setSelectedTeacher(teacher); setIsDeleteOpen(true); };
+
+    if (isAuthLoading || isLoadingData) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!user || user.role !== 'superadmin') return null;
+
+    const admin = user as SuperAdmin;
 
     return (
         <DashboardLayout role="admin" userName={admin.name} userEmail={admin.email}>
@@ -197,6 +262,7 @@ export default function AdminTeachersPage() {
                 open={isAssignOpen}
                 onOpenChange={setIsAssignOpen}
                 onSave={handleAssignSchools}
+                schools={schools}
             />
 
             <ConfirmDialog

@@ -1,59 +1,87 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Play, Clock, Award, ChevronRight, Download, FileText } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { mockStudents } from '@/data/users'; // Simulating DB fetch
-import { courses } from '@/data/courses'; // Simulating DB fetch
-
-// Simulate current user session
-const currentUserId = 'std-001';
-const currentUser = mockStudents.find(u => u.id === currentUserId);
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { getCoursesByIds, getAllCourses } from '@/lib/actions/course.actions';
 
 export default function StudentCoursesPage() {
-    if (!currentUser) return <div>User not found</div>;
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
+    const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+    const [completedCourses, setCompletedCourses] = useState<any[]>([]);
+    const [recommendedCourses, setRecommendedCourses] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Fetch enrolled courses details from "DB"
-    const enrolledCoursesData = currentUser.enrolledCourses.map(courseId => {
-        const course = courses.find(c => c.id === courseId);
-        if (!course) return null;
-
-        // Calculate progress (mock logic for now, in real app would be from user progress record)
-        const totalModules = course.curriculum.reduce((acc, mod) => acc + mod.lessons.length, 0);
-        const completedModules = 0; // consistent with mock data for now
-        const progress = totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
-
-        // Find next lesson
-        let nextLessonName = "Start Course";
-        if (course.curriculum.length > 0 && course.curriculum[0].lessons.length > 0) {
-            nextLessonName = course.curriculum[0].lessons[0].title;
+    useEffect(() => {
+        if (!isAuthLoading && (!user || user.role !== 'student')) {
+            router.push('/login');
         }
+    }, [user, isAuthLoading, router]);
 
-        return {
-            ...course,
-            progress,
-            totalModules,
-            completedModules,
-            nextLesson: nextLessonName,
-            lastAccessed: 'Just now'
+    useEffect(() => {
+        const fetchData = async () => {
+            if (user && user.role === 'student') {
+                try {
+                    const student = user as any;
+
+                    // Fetch Enrolled
+                    const enrolled = await getCoursesByIds(student.enrolledCourses || []);
+                    setEnrolledCourses(enrolled.map(course => {
+                        // Mock progress logic identical to previous
+                        const totalModules = course.curriculum?.reduce((acc: number, mod: any) => acc + mod.lessons.length, 0) || 0;
+                        const completedModules = 0;
+                        const progress = totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
+
+                        let nextLessonName = "Start Course";
+                        if (course.curriculum?.length > 0 && course.curriculum[0].lessons.length > 0) {
+                            nextLessonName = course.curriculum[0].lessons[0].title;
+                        }
+
+                        return {
+                            ...course,
+                            progress,
+                            totalModules,
+                            completedModules,
+                            nextLesson: nextLessonName,
+                            lastAccessed: 'Just now'
+                        };
+                    }));
+
+                    // Fetch Completed
+                    const completed = await getCoursesByIds(student.completedCourses || []);
+                    setCompletedCourses(completed.map(course => ({
+                        ...course,
+                        completionDate: '2024-01-01',
+                        grade: 'A',
+                        certificate: 'Available'
+                    })));
+
+                    // Fetch Recommended (All for now, ideally exclude enrolled)
+                    const all = await getAllCourses();
+                    setRecommendedCourses(all.slice(0, 4));
+
+                } catch (error) {
+                    console.error("Failed to fetch courses", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            }
         };
-    }).filter(Boolean);
 
-    // Fetch completed courses
-    const completedCoursesData = currentUser.completedCourses.map(courseId => {
-        const course = courses.find(c => c.id === courseId);
-        if (!course) return null;
-        return {
-            ...course,
-            completionDate: '2024-01-01', // Mock date
-            grade: 'A',
-            certificate: 'Available'
-        }
-    }).filter(Boolean);
+        if (user && !isAuthLoading) fetchData();
+    }, [user, isAuthLoading]);
 
+    if (isAuthLoading || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!user || user.role !== 'student') return null;
+
+    const currentUser = user as any;
 
     return (
         <DashboardLayout role="student" userName={currentUser.name} userEmail={currentUser.email}>
@@ -69,9 +97,9 @@ export default function StudentCoursesPage() {
                         <Play className="w-5 h-5 text-primary" />
                         In Progress
                     </h2>
-                    {enrolledCoursesData.length > 0 ? (
+                    {enrolledCourses.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {enrolledCoursesData.map((course: any, index: number) => (
+                            {enrolledCourses.map((course: any, index: number) => (
                                 <motion.div
                                     key={course.id}
                                     initial={{ opacity: 0, y: 20 }}
@@ -80,7 +108,6 @@ export default function StudentCoursesPage() {
                                     className="bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                                 >
                                     <div className="h-40 bg-muted relative overflow-hidden">
-                                        {/* Use specific images if available, else placeholder */}
                                         <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center text-white">
                                             {course.title}
                                         </div>
@@ -128,7 +155,7 @@ export default function StudentCoursesPage() {
                 </section>
 
                 {/* Completed Courses */}
-                {completedCoursesData.length > 0 && (
+                {completedCourses.length > 0 && (
                     <section>
                         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                             <Award className="w-5 h-5 text-green-600" />
@@ -147,7 +174,7 @@ export default function StudentCoursesPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
-                                        {completedCoursesData.map((course: any) => (
+                                        {completedCourses.map((course: any) => (
                                             <tr key={course.id} className="hover:bg-muted/5">
                                                 <td className="px-6 py-4 font-medium">{course.title}</td>
                                                 <td className="px-6 py-4 text-muted-foreground">{course.completionDate}</td>
@@ -184,7 +211,7 @@ export default function StudentCoursesPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {courses.slice(0, 4).map(course => (
+                        {recommendedCourses.map(course => (
                             <Link key={course.id} href={`/courses/${course.id}`}>
                                 <div className="bg-card border rounded-xl p-4 flex gap-4 hover:shadow-sm transition-shadow h-full cursor-pointer">
                                     <div className="w-16 h-16 bg-muted rounded-lg flex-shrink-0 bg-cover bg-center" style={{ backgroundImage: `url(${course.image})` }} />

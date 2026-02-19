@@ -1,5 +1,6 @@
 'use client';
 
+
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -8,23 +9,24 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { courses, Course, Lesson } from '@/data/courses';
-import { mockStudents } from '@/data/users';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { useAuth } from '@/context/AuthContext';
+import { getCourseById } from '@/lib/actions/course.actions';
+import { Course, Lesson } from '@/data/courses'; // Keeping type imports
+import { Student } from '@/data/users';
 
 export default function CoursePlayerPage() {
     const params = useParams();
     const router = useRouter();
     const courseId = params.courseId as string;
-
-    // Simulate user
-    const currentUser = mockStudents.find(u => u.id === 'std-001');
+    const { user, isLoading: isAuthLoading } = useAuth();
 
     const [course, setCourse] = useState<Course | null>(null);
     const [activeLesson, setActiveLesson] = useState<Lesson | null>(null);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [cinemaMode, setCinemaMode] = useState(false);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [isLoadingCourse, setIsLoadingCourse] = useState(true);
     const playerRef = useRef<HTMLDivElement>(null);
 
     // Handle Native Fullscreen
@@ -49,19 +51,37 @@ export default function CoursePlayerPage() {
     };
 
     useEffect(() => {
-        // "Fetch" course
-        const foundCourse = courses.find(c => c.id === courseId);
-        if (foundCourse) {
-            setCourse(foundCourse);
-            // specific logic to find first lesson or last accessed
-            if (foundCourse.curriculum.length > 0 && foundCourse.curriculum[0].lessons.length > 0) {
-                setActiveLesson(foundCourse.curriculum[0].lessons[0]);
-            }
+        if (!isAuthLoading && (!user || user.role !== 'student')) {
+            router.push('/login');
         }
+    }, [user, isAuthLoading, router]);
+
+    useEffect(() => {
+        const fetchCourse = async () => {
+            if (courseId) {
+                try {
+                    const fetchedCourse = await getCourseById(courseId);
+                    if (fetchedCourse) {
+                        setCourse(fetchedCourse);
+                        if (fetchedCourse.curriculum.length > 0 && fetchedCourse.curriculum[0].lessons.length > 0) {
+                            setActiveLesson(fetchedCourse.curriculum[0].lessons[0]);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Failed to load course", error);
+                } finally {
+                    setIsLoadingCourse(false);
+                }
+            }
+        };
+        fetchCourse();
     }, [courseId]);
 
-    if (!currentUser) return <div>User not found</div>;
-    if (!course) return <div className="p-8 text-center">Loading course...</div>;
+    if (isAuthLoading || isLoadingCourse) return <div className="p-8 text-center text-white">Loading course...</div>;
+    if (!user) return null;
+
+    const currentUser = user as Student;
+    if (!course) return <div className="p-8 text-center text-white">Course not found</div>;
 
     const handleLessonSelect = (lesson: Lesson) => {
         setActiveLesson(lesson);

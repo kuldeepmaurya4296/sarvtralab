@@ -1,14 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BookOpen, Search, Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSuperAdmin } from '@/data/users';
-import { CourseService } from '@/data/services/course.service';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Course } from '@/data/courses';
+import { useAuth } from '@/context/AuthContext';
+import { SuperAdmin } from '@/data/users';
+
+// Actions
+import { getAllCourses, createCourse, updateCourse, deleteCourse } from '@/lib/actions/course.actions';
 
 // Refactored Components
 import { CourseCardGrid } from '@/components/admin/courses/CourseCardGrid';
@@ -17,9 +21,12 @@ import { CourseFormSheet } from '@/components/admin/courses/CourseFormSheet';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 export default function AdminCoursesPage() {
-    const admin = mockSuperAdmin;
-    const [courseList, setCourseList] = useState<Course[]>(CourseService.getAll());
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
+
+    const [courseList, setCourseList] = useState<Course[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     // UI States
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -28,6 +35,29 @@ export default function AdminCoursesPage() {
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
+    useEffect(() => {
+        if (!isAuthLoading && (!user || user.role !== 'superadmin')) {
+            router.push('/login');
+        }
+    }, [user, isAuthLoading, router]);
+
+    useEffect(() => {
+        const fetchCourses = async () => {
+            if (user?.role === 'superadmin') {
+                try {
+                    const courses = await getAllCourses();
+                    setCourseList(courses);
+                } catch (error) {
+                    toast.error("Failed to load courses");
+                } finally {
+                    setIsLoadingData(false);
+                }
+            }
+        };
+
+        if (user && !isAuthLoading) fetchCourses();
+    }, [user, isAuthLoading]);
+
     const filteredCourses = courseList.filter(course =>
         course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         course.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -35,54 +65,73 @@ export default function AdminCoursesPage() {
     );
 
     // Handlers
-    const handleAddCourse = (formData: any) => {
-        const createdCourse = CourseService.create({
-            ...formData,
-            category: formData.category as 'foundation' | 'intermediate' | 'advanced',
-            level: formData.level as 'Beginner' | 'Intermediate' | 'Advanced',
-            totalHours: formData.sessions * 1.5,
-            originalPrice: formData.price * 1.5,
-            emiAvailable: true,
-            tags: ['New', 'Featured'],
-            features: ['Live Sessions', 'Projects'],
-            curriculum: [],
-            rating: 0,
-            studentsEnrolled: 0,
-            instructor: 'TBD'
-        });
+    const handleAddCourse = async (formData: any) => {
+        try {
+            const createdCourse = await createCourse({
+                ...formData,
+                category: formData.category as 'foundation' | 'intermediate' | 'advanced',
+                level: formData.level as 'Beginner' | 'Intermediate' | 'Advanced',
+                totalHours: formData.sessions * 1.5,
+                originalPrice: formData.price * 1.5,
+                emiAvailable: true,
+                tags: ['New', 'Featured'],
+                features: ['Live Sessions', 'Projects'],
+                curriculum: [],
+                rating: 0,
+                studentsEnrolled: 0,
+                instructor: 'TBD'
+            });
 
-        if (createdCourse) {
-            setCourseList([createdCourse, ...courseList]);
-            toast.success("Course created successfully");
+            if (createdCourse) {
+                setCourseList([createdCourse, ...courseList]);
+                toast.success("Course created successfully");
+                setIsAddOpen(false);
+            }
+        } catch (error) {
+            toast.error("Failed to create course");
         }
     };
 
-    const handleEditSave = (formData: any) => {
+    const handleEditSave = async (formData: any) => {
         if (!selectedCourse) return;
-        const updated = CourseService.update(selectedCourse.id, {
-            ...formData,
-            category: formData.category as 'foundation' | 'intermediate' | 'advanced',
-            level: formData.level as 'Beginner' | 'Intermediate' | 'Advanced'
-        });
+        try {
+            const updated = await updateCourse(selectedCourse.id, {
+                ...formData,
+                category: formData.category as 'foundation' | 'intermediate' | 'advanced',
+                level: formData.level as 'Beginner' | 'Intermediate' | 'Advanced'
+            });
 
-        if (updated) {
-            setCourseList(courseList.map(c => c.id === selectedCourse.id ? updated : c));
-            toast.success("Course details updated");
+            if (updated) {
+                setCourseList(courseList.map(c => c.id === selectedCourse.id ? updated : c));
+                toast.success("Course details updated");
+                setIsEditOpen(false);
+            }
+        } catch (error) {
+            toast.error("Failed to update course");
         }
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!selectedCourse) return;
-        CourseService.delete(selectedCourse.id);
-        setCourseList(courseList.filter(c => c.id !== selectedCourse.id));
-        setIsDeleteOpen(false);
-        toast.success("Course archived");
+        try {
+            await deleteCourse(selectedCourse.id);
+            setCourseList(courseList.filter(c => c.id !== selectedCourse.id));
+            setIsDeleteOpen(false);
+            toast.success("Course archived");
+        } catch (error) {
+            toast.error("Failed to archive course");
+        }
     };
 
     // Open handlers
     const openView = (course: Course) => { setSelectedCourse(course); setIsViewOpen(true); };
     const openEdit = (course: Course) => { setSelectedCourse(course); setIsEditOpen(true); };
     const openDelete = (course: Course) => { setSelectedCourse(course); setIsDeleteOpen(true); };
+
+    if (isAuthLoading || isLoadingData) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!user || user.role !== 'superadmin') return null;
+
+    const admin = user as SuperAdmin;
 
     return (
         <DashboardLayout role="admin" userName={admin.name} userEmail={admin.email}>

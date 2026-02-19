@@ -3,59 +3,54 @@ import { useEffect, useState } from 'react';
 import { Users, School, IndianRupee, TrendingUp, Building } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
-import FilterTabs from '@/components/dashboard/FilterTabs';
+// import FilterTabs from '@/components/dashboard/FilterTabs';
 import { ChartCard, LineChartComponent, PieChartComponent, MultiBarChartComponent } from '@/components/dashboard/Charts';
-import { db } from '@/data/services/database';
-import { weeklyData, monthlyData, yearlyData, courseEnrollment } from '@/data/analytics';
-import { SuperAdmin } from '@/data/users';
+import { getAdminDashboardStats } from '@/lib/actions/dashboard.actions';
+
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
+
 export default function AdminDashboardPage() {
-    const { user, isLoading } = useAuth();
+    const { user, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
     const [period, setPeriod] = useState('Monthly');
+    const [stats, setStats] = useState<any>(null);
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== 'superadmin')) {
+        if (!isAuthLoading && (!user || user.role !== 'superadmin')) {
             router.push('/login');
         }
-    }, [user, isLoading, router]);
+    }, [user, isAuthLoading, router]);
 
-    if (isLoading) return <div>Loading...</div>;
+    useEffect(() => {
+        const fetchStats = async () => {
+            if (user?.role === 'superadmin') {
+                try {
+                    const data = await getAdminDashboardStats();
+                    setStats(data);
+                } catch (e) {
+                    console.error("Failed to load admin stats", e);
+                } finally {
+                    setIsLoadingData(false);
+                }
+            }
+        };
+
+        if (user && !isAuthLoading) {
+            fetchStats();
+        }
+    }, [user, isAuthLoading]);
+
+    if (isAuthLoading || isLoadingData) return <div>Loading...</div>;
     if (!user || user.role !== 'superadmin') return null;
+    if (!stats) return <div>Error loading data.</div>;
 
-    const admin = user as SuperAdmin;
-
-    // Dynamic Calculations
-    const totalStudents = db.students.count();
-    const totalSchools = db.schools.count();
-    // Revenue calc using DB service
-    // Get all students to calculate revenue
-    const allStudents = db.students.find();
-    const totalRevenue = allStudents.reduce((acc, student) => {
-        const studentRevenue = student.enrolledCourses.reduce((courseAcc, cId) => {
-            const course = db.courses.findById(cId);
-            return courseAcc + (course ? course.price : 0);
-        }, 0);
-        return acc + studentRevenue;
-    }, 0);
+    const admin = user as any;
+    const { totalStudents, totalSchools, totalRevenue, pieData, recentSchools, chartData, courseEnrollment } = stats;
 
     const completionRate = "78.5"; // Keeping static
-
-    const getData = () => {
-        switch (period) {
-            case 'Weekly': return weeklyData;
-            case 'Yearly': return yearlyData;
-            default: return monthlyData;
-        }
-    };
-
-    const pieData = [
-        { name: 'Foundation', value: db.courses.count(c => c.category === 'foundation') },
-        { name: 'Intermediate', value: db.courses.count(c => c.category === 'intermediate') },
-        { name: 'Advanced', value: db.courses.count(c => c.category === 'advanced') }
-    ];
 
     return (
         <DashboardLayout role="admin" userName={admin.name} userEmail={admin.email}>
@@ -65,7 +60,6 @@ export default function AdminDashboardPage() {
                         <h1 className="text-2xl font-bold text-foreground">Super Admin Dashboard</h1>
                         <p className="text-muted-foreground">Complete platform overview</p>
                     </div>
-                    <FilterTabs options={['Weekly', 'Monthly', 'Yearly']} value={period} onChange={setPeriod} />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -78,7 +72,7 @@ export default function AdminDashboardPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <ChartCard title="Growth Trends" subtitle="Students & Schools over time">
                         <LineChartComponent
-                            data={getData()}
+                            data={chartData}
                             lines={[
                                 { dataKey: 'students', color: 'hsl(var(--primary))', name: 'Students' },
                                 { dataKey: 'schools', color: 'hsl(var(--secondary))', name: 'Schools' }
@@ -95,7 +89,7 @@ export default function AdminDashboardPage() {
                     <div className="p-6 rounded-2xl bg-card border shadow-sm h-full overflow-hidden flex flex-col">
                         <h3 className="text-lg font-semibold mb-4">Recent Schools</h3>
                         <div className="space-y-3 flex-1 overflow-y-auto pr-2">
-                            {db.schools.find({}, { limit: 5 }).map((school) => (
+                            {recentSchools.map((school: any) => (
                                 <div key={school.id} className="flex items-center gap-4 p-3 rounded-lg border hover:bg-muted/50 transition-colors">
                                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                                         <Building className="w-5 h-5 text-primary" />
@@ -104,7 +98,7 @@ export default function AdminDashboardPage() {
                                         <p className="font-medium truncate">{school.name}</p>
                                         <p className="text-xs text-muted-foreground truncate">{school.city} • {school.totalStudents} students</p>
                                     </div>
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${school.subscriptionPlan === 'premium' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>{school.subscriptionPlan}</span>
+                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${school.subscriptionPlan === 'premium' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}>{school.subscriptionPlan || 'basic'}</span>
                                 </div>
                             ))}
                         </div>
@@ -112,7 +106,7 @@ export default function AdminDashboardPage() {
 
                     <ChartCard title="Course Performance" subtitle="Enrolled vs Completed">
                         <MultiBarChartComponent
-                            data={courseEnrollment.slice(0, 4)}
+                            data={courseEnrollment}
                             bars={[
                                 { dataKey: 'enrolled', color: 'hsl(var(--primary))', name: 'Enrolled' },
                                 { dataKey: 'completed', color: 'hsl(var(--success))', name: 'Completed' }

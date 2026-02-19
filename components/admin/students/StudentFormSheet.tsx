@@ -21,8 +21,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { StudentService } from '@/data/services/student.service';
-import { Student } from '@/data/users';
+import { Student, School } from '@/data/users';
 
 interface StudentFormSheetProps {
     open: boolean;
@@ -30,9 +29,10 @@ interface StudentFormSheetProps {
     initialData?: Partial<Student> | null;
     mode: 'add' | 'edit';
     onSubmit: (data: any) => void;
+    schools: School[];
 }
 
-export function StudentFormSheet({ open, onOpenChange, initialData, mode, onSubmit }: StudentFormSheetProps) {
+export function StudentFormSheet({ open, onOpenChange, initialData, mode, onSubmit, schools }: StudentFormSheetProps) {
     const defaultForm = {
         name: '',
         email: '',
@@ -42,11 +42,9 @@ export function StudentFormSheet({ open, onOpenChange, initialData, mode, onSubm
     };
 
     const [formData, setFormData] = useState(defaultForm);
-    const [schools, setSchools] = useState<any[]>([]);
 
     useEffect(() => {
         if (open) {
-            setSchools(StudentService.getSchools());
             if (mode === 'edit' && initialData) {
                 setFormData({
                     name: initialData.name || '',

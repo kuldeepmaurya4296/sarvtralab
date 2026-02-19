@@ -5,20 +5,42 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import ProgressRing from '@/components/dashboard/ProgressRing';
 import { ChartCard, BarChartComponent } from '@/components/dashboard/Charts';
-import { db } from '@/data/services/database';
-import { studentWatchTime } from '@/data/analytics';
+import { getCoursesByIds } from '@/lib/actions/course.actions';
+import { getCertificateCount } from '@/lib/actions/certificate.actions';
+import { getCourseMaterials } from '@/lib/actions/material.actions';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { Student } from '@/data/users';
+import { useEffect, useState } from 'react';
+
+// Mock data for chart until backend supports it
+const studentWatchTime = [
+    { day: 'Mon', minutes: 45 },
+    { day: 'Tue', minutes: 60 },
+    { day: 'Wed', minutes: 30 },
+    { day: 'Thu', minutes: 90 },
+    { day: 'Fri', minutes: 45 },
+    { day: 'Sat', minutes: 120 },
+    { day: 'Sun', minutes: 0 },
+];
 
 export default function StudentDashboardPage() {
     const { user, isLoading } = useAuth();
     const router = useRouter();
+
+
+    const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+    const [stats, setStats] = useState({
+        totalEnrolled: 0,
+        certificatesCount: 0,
+        watchTime: "20.8 hrs",
+        overallProgress: "65%"
+    });
+    const [recentMaterials, setRecentMaterials] = useState<any[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== 'student')) {
@@ -26,38 +48,65 @@ export default function StudentDashboardPage() {
         }
     }, [user, isLoading, router]);
 
-    if (isLoading) {
+    useEffect(() => {
+        const loadDashboardData = async () => {
+            if (isLoading || !user || user.role !== 'student') return;
+
+            setIsLoadingData(true);
+            try {
+                // 1. Fetch Enrolled Courses
+                // user.enrolledCourses might be undefined if not typed, but valid if it exists on user object
+                const enrolledIds = (user as any).enrolledCourses || [];
+                const courses = await getCoursesByIds(enrolledIds);
+                setEnrolledCourses(courses);
+
+                // 2. Fetch Certificates Count
+                const certCount = await getCertificateCount(user.id);
+
+                // 3. Update Stats
+                setStats(prev => ({
+                    ...prev,
+                    totalEnrolled: courses.length,
+                    certificatesCount: certCount
+                }));
+
+                // 4. Fetch Materials for first course if available
+                if (courses.length > 0) {
+                    const materials = await getCourseMaterials(courses[0].id);
+                    setRecentMaterials(materials.slice(0, 3)); // Top 3
+                }
+
+            } catch (error) {
+                console.error("Dashboard Load Error:", error);
+                toast.error("Failed to load dashboard data");
+            } finally {
+                setIsLoadingData(false);
+            }
+        };
+
+        if (user) {
+            loadDashboardData();
+        }
+    }, [user, isLoading]);
+
+    if (isLoading || isLoadingData) {
         return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     }
 
     if (!user || user.role !== 'student') return null;
 
-    const student = user as Student;
+    const student = user;
+    const currentCourse = enrolledCourses[0];
 
-    // 2. Fetch Enrolled Courses Data
-    const enrolledCoursesDetails = student.enrolledCourses.map(courseId =>
-        db.courses.findById(courseId)
-    ).filter(Boolean);
-
-    // 3. Calculate "Current Course" (taking the first one for now)
-    const currentCourse = enrolledCoursesDetails[0];
-
-    // Mock progress calculation
+    // Mock progress calculation based on fetched course
     const progressData = currentCourse ? {
         courseName: currentCourse.title,
         progress: 65, // Mock percentage
-        totalLessons: currentCourse.curriculum.reduce((acc, mod) => acc + mod.lessons.length, 0),
+        totalLessons: currentCourse.curriculum?.reduce((acc: number, mod: any) => acc + (mod.lessons?.length || 0), 0) || 0,
         completedLessons: 8, // Mock
         timeSpent: 1250,
         lastAccessed: '2 days ago'
     } : null;
-
-    // 4. Calculate Stats
-    const totalEnrolled = student.enrolledCourses.length;
-    const certificatesCount = db.certificates.count(c => c.studentId === student.id);
-    // Mock other stats
-    const watchTime = "20.8 hrs";
-    const overallProgress = "65%";
 
     const handleDownload = (item: string) => {
         toast.info(`Downloading ${item}...`);
@@ -75,10 +124,10 @@ export default function StudentDashboardPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <StatCard icon={BookOpen} title="Enrolled Courses" value={totalEnrolled} color="primary" />
-                    <StatCard icon={Clock} title="Watch Time" value={watchTime} change="+2.5 hrs" changeType="positive" color="secondary" />
-                    <StatCard icon={Award} title="Certificates" value={certificatesCount} color="success" />
-                    <StatCard icon={Target} title="Overall Progress" value={overallProgress} change="+5%" changeType="positive" color="accent" />
+                    <StatCard icon={BookOpen} title="Enrolled Courses" value={stats.totalEnrolled} color="primary" />
+                    <StatCard icon={Clock} title="Watch Time" value={stats.watchTime} change="+2.5 hrs" changeType="positive" color="secondary" />
+                    <StatCard icon={Award} title="Certificates" value={stats.certificatesCount} color="success" />
+                    <StatCard icon={Target} title="Overall Progress" value={stats.overallProgress} change="+5%" changeType="positive" color="accent" />
                 </div>
 
                 {/* Main Content */}
@@ -122,22 +171,24 @@ export default function StudentDashboardPage() {
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-6 rounded-2xl bg-card border shadow-sm">
                     <h3 className="text-lg font-semibold mb-4">Recent Materials</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {currentCourse?.category === 'foundation' && ['Introduction to Robotics', 'Basic Electronics Guide'].map((item, i) => (
+                        {recentMaterials.length > 0 ? recentMaterials.map((mat, i) => (
                             <div
-                                key={i}
-                                onClick={() => handleDownload(item)}
+                                key={mat.id || i}
+                                onClick={() => handleDownload(mat.title)}
                                 className="flex items-center gap-3 p-4 rounded-xl border hover:bg-muted/50 transition-colors cursor-pointer"
                             >
                                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                                     <FileText className="w-5 h-5 text-primary" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="font-medium text-foreground truncate">{item}</p>
-                                    <p className="text-xs text-muted-foreground">PDF • 2.4 MB</p>
+                                    <p className="font-medium text-foreground truncate">{mat.title}</p>
+                                    <p className="text-xs text-muted-foreground">{mat.type?.toUpperCase()} • {mat.size || 'N/A'}</p>
                                 </div>
                             </div>
-                        ))}
-                        {!currentCourse && <p className="text-muted-foreground text-sm">Enroll in a course to see materials.</p>}
+                        )) : (
+                            !currentCourse ? <p className="text-muted-foreground text-sm">Enroll in a course to see materials.</p>
+                                : <p className="text-muted-foreground text-sm">No recent materials found.</p>
+                        )}
                     </div>
                 </motion.div>
             </div>

@@ -24,7 +24,8 @@ import {
   School,
   Shield,
   Headphones,
-  Award
+  Award,
+  ShoppingCart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -47,8 +48,9 @@ const roleMenuItems: Record<string, MenuItem[]> = {
   student: [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/student/dashboard' },
     { icon: BookOpen, label: 'My Courses', href: '/student/courses' },
-    { icon: Award, label: 'Certificates', href: '/student/certificates' }, // Added Certificates
+    { icon: Award, label: 'Certificates', href: '/student/certificates' },
     { icon: FileText, label: 'Materials', href: '/student/materials' },
+    { icon: ShoppingCart, label: 'Order', href: 'https://www.yantraq.com/products' },
     { icon: Headphones, label: 'Support', href: '/student/support' },
     { icon: Settings, label: 'Settings', href: '/student/settings' }
   ],
@@ -73,7 +75,7 @@ const roleMenuItems: Record<string, MenuItem[]> = {
     { icon: GraduationCap, label: 'Teachers', href: '/admin/teachers' },
     { icon: Headphones, label: 'Help Support', href: '/admin/help-support' },
     { icon: BookOpen, label: 'Courses', href: '/admin/courses' },
-    { icon: Award, label: 'Certificates', href: '/admin/certificates' }, // Added Certificates
+    { icon: Award, label: 'Certificates', href: '/admin/certificates' },
     { icon: FileText, label: 'Content', href: '/admin/content' },
     { icon: Shield, label: 'Govt Orgs', href: '/admin/govt' },
     { icon: Settings, label: 'Settings', href: '/admin/settings' }
@@ -89,6 +91,15 @@ const roleMenuItems: Record<string, MenuItem[]> = {
     { icon: FileText, label: 'Content', href: '/admin/content' },
     { icon: Shield, label: 'Govt Orgs', href: '/admin/govt' },
     { icon: Settings, label: 'Settings', href: '/admin/settings' }
+  ],
+  teacher: [
+    { icon: LayoutDashboard, label: 'Dashboard', href: '/student/dashboard' },
+    { icon: BookOpen, label: 'My Courses', href: '/student/courses' },
+    { icon: Award, label: 'Certificates', href: '/student/certificates' },
+    { icon: FileText, label: 'Materials', href: '/student/materials' },
+    { icon: ShoppingCart, label: 'Order', href: 'https://www.yantraq.com/products' },
+    { icon: Headphones, label: 'Support', href: '/student/support' },
+    { icon: Settings, label: 'Settings', href: '/student/settings' }
   ]
 };
 

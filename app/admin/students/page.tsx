@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Search,
     Download,
@@ -9,8 +9,8 @@ import {
     Users,
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSuperAdmin } from '@/data/users';
-import { StudentService } from '@/data/services/student.service';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -29,19 +29,25 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
+// Actions
+import { getAllStudents, createStudent, updateStudent, deleteStudent } from '@/lib/actions/student.actions';
+import { getAllSchools } from '@/lib/actions/school.actions';
+
 // Refactored Components
 import { StudentTable } from '@/components/admin/students/StudentTable';
 import { StudentViewSheet } from '@/components/admin/students/StudentViewSheet';
 import { StudentFormSheet } from '@/components/admin/students/StudentFormSheet';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
-import { Student } from '@/data/users';
+import { Student, School, SuperAdmin } from '@/data/users';
 
 export default function AdminStudentsPage() {
-    const admin = mockSuperAdmin;
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
 
-    // Initial data load
-    const [students, setStudents] = useState<Student[]>(StudentService.getAll());
-    const schools = StudentService.getSchools();
+    // Data States
+    const [students, setStudents] = useState<Student[]>([]);
+    const [schools, setSchools] = useState<School[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     // Filters
     const [searchQuery, setSearchQuery] = useState('');
@@ -54,6 +60,34 @@ export default function AdminStudentsPage() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
+    useEffect(() => {
+        if (!isAuthLoading && (!user || user.role !== 'superadmin')) {
+            router.push('/login');
+        }
+    }, [user, isAuthLoading, router]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            if (user?.role === 'superadmin') {
+                try {
+                    const [studentsData, schoolsData] = await Promise.all([
+                        getAllStudents(),
+                        getAllSchools()
+                    ]);
+                    setStudents(studentsData);
+                    setSchools(schoolsData);
+                } catch (error) {
+                    toast.error("Failed to load data");
+                    console.error(error);
+                } finally {
+                    setIsLoadingData(false);
+                }
+            }
+        };
+
+        if (user && !isAuthLoading) loadData();
+    }, [user, isAuthLoading]);
 
     // Filter logic
     const filteredStudents = students.filter(student => {
@@ -76,10 +110,10 @@ export default function AdminStudentsPage() {
                 s.id,
                 `"${s.name}"`,
                 s.email,
-                StudentService.getSchoolName(s.schoolId),
+                s.schoolName,
                 s.grade,
                 s.status,
-                s.enrolledCourses.length
+                s.enrolledCourses?.length || 0
             ].join(','))
         ].join('\n');
 
@@ -93,49 +127,65 @@ export default function AdminStudentsPage() {
         toast.success("Exported student data to CSV");
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!selectedStudent) return;
-        StudentService.delete(selectedStudent.id);
-        setStudents(students.filter(s => s.id !== selectedStudent.id));
-        setIsDeleteOpen(false);
-        toast.success("Student suspended successfully");
-    };
-
-    const handleEditSave = (formData: any) => {
-        if (!selectedStudent) return;
-
-        const updated = StudentService.update(selectedStudent.id, {
-            ...formData,
-            schoolName: StudentService.getSchoolName(formData.schoolId),
-        });
-
-        if (updated) {
-            setStudents(students.map(s => s.id === selectedStudent.id ? updated : s));
-            toast.success("Student details updated");
+        try {
+            await deleteStudent(selectedStudent.id);
+            setStudents(prev => prev.filter(s => s.id !== selectedStudent.id));
+            setIsDeleteOpen(false);
+            toast.success("Student suspended successfully");
+        } catch (error) {
+            toast.error("Failed to suspend student");
         }
     };
 
-    const handleAddStudent = (formData: any) => {
-        const newStudent = StudentService.create({
-            ...formData,
-            schoolName: StudentService.getSchoolName(formData.schoolId),
-            enrolledCourses: [],
-            role: 'student',
-            city: 'New City',
-            state: 'State',
-            parentName: 'Parent Name',
-            parentPhone: '000-000-0000',
-            completedCourses: [],
-            parentEmail: '',
-            dateOfBirth: '',
-            address: '',
-            pincode: '',
-            status: 'active'
-        });
+    const handleEditSave = async (formData: any) => {
+        if (!selectedStudent) return;
 
-        if (newStudent) {
-            setStudents([newStudent, ...students]);
-            toast.success("New student added successfully");
+        try {
+            const schoolName = schools.find(s => s.id === formData.schoolId)?.name || 'Unknown School';
+            const updated = await updateStudent(selectedStudent.id, {
+                ...formData,
+                schoolName,
+            });
+
+            if (updated) {
+                setStudents(prev => prev.map(s => s.id === selectedStudent.id ? updated : s));
+                toast.success("Student details updated");
+                setIsEditOpen(false);
+            }
+        } catch (error) {
+            toast.error("Failed to update student");
+        }
+    };
+
+    const handleAddStudent = async (formData: any) => {
+        try {
+            const schoolName = schools.find(s => s.id === formData.schoolId)?.name || 'Unknown School';
+            const newStudent = await createStudent({
+                ...formData,
+                schoolName,
+                enrolledCourses: [],
+                role: 'student',
+                city: 'New City',
+                state: 'State',
+                parentName: 'Parent Name',
+                parentPhone: '000-000-0000',
+                completedCourses: [],
+                parentEmail: '',
+                dateOfBirth: '',
+                address: '',
+                pincode: '',
+                status: 'active'
+            });
+
+            if (newStudent) {
+                setStudents(prev => [newStudent, ...prev]);
+                toast.success("New student added successfully");
+                setIsAddOpen(false);
+            }
+        } catch (error) {
+            toast.error("Failed to add student");
         }
     };
 
@@ -153,6 +203,11 @@ export default function AdminStudentsPage() {
         setSelectedStudent(student);
         setIsDeleteOpen(true);
     };
+
+    if (isAuthLoading || isLoadingData) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!user || user.role !== 'superadmin') return null;
+
+    const admin = user as SuperAdmin;
 
     return (
         <DashboardLayout role="admin" userName={admin.name} userEmail={admin.email}>
@@ -253,6 +308,8 @@ export default function AdminStudentsPage() {
                     onOpenChange={setIsAddOpen}
                     mode="add"
                     onSubmit={handleAddStudent}
+                    schools={schools} // Pass schools prop if supported? Check component later.
+                // Wait, StudentFormSheet might need schools to populate dropdown.
                 />
 
                 {/* Edit Student Sheet */}
@@ -262,6 +319,7 @@ export default function AdminStudentsPage() {
                     mode="edit"
                     initialData={selectedStudent}
                     onSubmit={handleEditSave}
+                    schools={schools}
                 />
 
                 {/* Delete Confirmation */}

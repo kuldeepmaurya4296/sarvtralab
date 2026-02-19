@@ -1,25 +1,23 @@
 'use client';
-import { useState, useRef } from 'react';
+
+import { useState, useRef, useEffect } from 'react';
 import {
     Award,
     Search,
     Download,
     CheckCircle2,
     XCircle,
-    MoreVertical,
-    RefreshCw,
     User,
     Eye,
     Mail,
     Phone,
     Printer,
-    Loader2
+    Loader2,
+    RefreshCw
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSuperAdmin, mockStudents, mockSchools } from '@/data/users';
-import { mockIssuedCertificates } from '@/data/certificates';
-import { CertificateService } from '@/data/services/certificate.service';
-import { courses as mockCourses } from '@/data/courses';
+import { useAuth } from '@/context/AuthContext';
 import { CertificateTemplate } from '@/components/admin/CertificateTemplate';
 import {
     Table,
@@ -39,16 +37,8 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
     Dialog,
     DialogContent,
-    DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
 import {
@@ -79,59 +69,30 @@ import html2canvas from 'html2canvas';
 // @ts-ignore
 import { jsPDF } from 'jspdf';
 
-// Extended Mock Data for Certificates
-const mockCertificateRequests = [
-    {
-        id: 'REQ-001',
-        studentId: mockStudents[0].id,
-        courseId: 'foundation-robotics-3m',
-        requestDate: '2025-02-15T10:30:00Z',
-        progress: 100,
-        status: 'pending'
-    },
-    {
-        id: 'REQ-002',
-        studentId: mockStudents[1].id,
-        courseId: 'intermediate-robotics-3m',
-        requestDate: '2025-02-16T14:20:00Z',
-        progress: 85,
-        status: 'pending'
-    },
-    {
-        id: 'REQ-004',
-        studentId: mockStudents[3].id,
-        courseId: 'advanced-robotics-3m',
-        requestDate: '2025-02-17T09:00:00Z',
-        progress: 78,
-        status: 'pending'
-    },
-    {
-        id: 'REQ-005',
-        studentId: mockStudents[4].id,
-        courseId: 'foundation-robotics-6m',
-        requestDate: '2025-02-17T11:45:00Z',
-        progress: 95,
-        status: 'pending'
-    },
-    {
-        id: 'REQ-003',
-        studentId: mockStudents[2].id,
-        courseId: 'foundation-robotics-3m',
-        requestDate: '2025-02-14T09:15:00Z',
-        progress: 92,
-        status: 'rejected'
-    }
-];
-
-
+// Actions
+import { getAllCertificates, issueCertificate } from '@/lib/actions/certificate.actions';
+import { getAllStudents } from '@/lib/actions/student.actions';
+import { getAllCourses } from '@/lib/actions/course.actions';
+import { getAllSchools } from '@/lib/actions/school.actions';
+import { Student, School, SuperAdmin } from '@/data/users';
+import { Course } from '@/data/courses';
+import { Certificate } from '@/data/certificates';
 
 export default function AdminCertificatesPage() {
-    const admin = mockSuperAdmin;
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
+
     const [activeTab, setActiveTab] = useState('requests');
-    const [requests, setRequests] = useState(mockCertificateRequests);
-    const [certificates, setCertificates] = useState(mockIssuedCertificates);
+    const [requests, setRequests] = useState<any[]>([]);
+    const [certificates, setCertificates] = useState<Certificate[]>([]);
+    const [students, setStudents] = useState<Student[]>([]);
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [schools, setSchools] = useState<School[]>([]);
+
+    // UI State
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     // Detailed View State
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
@@ -148,21 +109,82 @@ export default function AdminCertificatesPage() {
     const hiddenCertRef = useRef<HTMLDivElement>(null);
     const [selectedSchool, setSelectedSchool] = useState<string>('all');
     const [selectedCourse, setSelectedCourse] = useState<string>('all');
+    const [isDownloadingSingle, setIsDownloadingSingle] = useState(false);
 
     // Auto-approve generic logic
     const [autoApproveEnabled, setAutoApproveEnabled] = useState(false);
 
-    // Filtered lists
+    useEffect(() => {
+        if (!isAuthLoading && (!user || user.role !== 'superadmin')) {
+            router.push('/login');
+        }
+    }, [user, isAuthLoading, router]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            if (user?.role === 'superadmin') {
+                try {
+                    const [certsData, studentsData, coursesData, schoolsData] = await Promise.all([
+                        getAllCertificates(),
+                        getAllStudents(),
+                        getAllCourses(),
+                        getAllSchools()
+                    ]);
+
+                    setCertificates(certsData);
+                    setStudents(studentsData);
+                    setCourses(coursesData);
+                    setSchools(schoolsData);
+
+                    // Derive requests logic
+                    const pending: any[] = [];
+                    studentsData.forEach((s: Student) => {
+                        s.completedCourses?.forEach((cId: string) => {
+                            const hasCert = certsData.some(cert => cert.studentId === s.id && cert.courseId === cId);
+                            if (!hasCert) {
+                                pending.push({
+                                    id: `req-${s.id}-${cId}`,
+                                    studentId: s.id,
+                                    courseId: cId,
+                                    requestDate: new Date().toISOString(),
+                                    progress: 100,
+                                    status: 'pending'
+                                });
+                            }
+                        });
+                    });
+                    setRequests(pending);
+
+                } catch (error) {
+                    console.error("Failed to load data", error);
+                    toast.error("Failed to load data");
+                } finally {
+                    setIsLoadingData(false);
+                }
+            }
+        };
+
+        if (user && !isAuthLoading) loadData();
+    }, [user, isAuthLoading]);
+
+    // Helpers
+    const getStudent = (id: string) => students.find(s => s.id === id);
+    const getCourse = (id: string) => courses.find(c => c.id === id);
+
+    const getStudentCertificates = (studentId: string) => {
+        return certificates.filter(c => c.studentId === studentId);
+    };
+
+    // Filters
     const filteredRequests = requests.filter(req => {
-        const student = mockStudents.find(s => s.id === req.studentId);
+        const student = getStudent(req.studentId);
         const searchMatch = student?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             req.id.toLowerCase().includes(searchQuery.toLowerCase());
         return searchMatch && req.status === 'pending';
     });
 
     const filteredIssued = certificates.filter(cert => {
-        const student = mockStudents.find(s => s.id === cert.studentId);
-
+        const student = getStudent(cert.studentId);
         const matchesSearch = student?.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             cert.id.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -172,63 +194,53 @@ export default function AdminCertificatesPage() {
         return matchesSearch && matchesSchool && matchesCourse;
     });
 
-    // Helpers
-    const getStudent = (id: string) => mockStudents.find(s => s.id === id);
-    const getCourse = (id: string): { title: string } | undefined => {
-        // Search in main courses
-        let course = mockCourses.find(c => c.id === id);
-        if (course) return { title: course.title };
-
-        // Search in curriculum modules if not main course (for granular certs)
-        for (const c of mockCourses) {
-            if (c.curriculum) {
-                const module = c.curriculum.find(m => m.id === id);
-                if (module) return { title: `Module: ${module.title}` };
-            }
-        }
-        return undefined; // fallback
-    };
-
-
-    const getStudentCertificates = (studentId: string) => {
-        return certificates.filter(c => c.studentId === studentId);
-    };
-
     // Handlers
-    const handleApprove = (reqId: string) => {
+    const handleApprove = async (reqId: string) => {
         const req = requests.find(r => r.id === reqId);
         if (!req) return;
 
-        const newCert = CertificateService.issue({
-            studentId: req.studentId,
-            courseId: req.courseId,
-            issueDate: new Date().toISOString().split('T')[0]
-        });
+        try {
+            const newCert = await issueCertificate({
+                studentId: req.studentId,
+                courseId: req.courseId,
+                issueDate: new Date().toISOString().split('T')[0]
+            });
 
-        if (newCert) {
-            setCertificates([newCert, ...certificates]);
-            setRequests(requests.filter(r => r.id !== reqId));
-            toast.success(`Certificate issued for ${getStudent(req.studentId)?.name}`);
+            if (newCert) {
+                setCertificates(prev => [newCert, ...prev]);
+                setRequests(prev => prev.filter(r => r.id !== reqId));
+                toast.success(`Certificate issued for ${getStudent(req.studentId)?.name}`);
+            }
+        } catch (error) {
+            toast.error("Failed to issue certificate");
         }
     };
 
     const handleReject = (reqId: string) => {
-        setRequests(requests.map(r => r.id === reqId ? { ...r, status: 'rejected' } : r));
+        setRequests(prev => prev.filter(r => r.id !== reqId));
         toast.info("Certificate request rejected");
     };
 
-    const handleBulkApprove = () => {
-        selectedRequests.forEach(id => handleApprove(id));
+    const handleBulkApprove = async () => {
+        if (selectedRequests.length === 0) return;
+
+        toast.loading("Issuing certificates...");
+        let successCount = 0;
+
+        for (const id of selectedRequests) {
+            await handleApprove(id);
+            successCount++; // Naive count, actual success depends on handleApprove result but simpler for now
+        }
+
         setSelectedRequests([]);
-        toast.success(`Issued ${selectedRequests.length} certificates`);
+        toast.dismiss();
+        toast.success(`Processed requests`);
     };
 
     const toggleSelect = (id: string) => {
-        if (selectedRequests.includes(id)) {
-            setSelectedRequests(selectedRequests.filter(si => si !== id));
-        } else {
-            setSelectedRequests([...selectedRequests, id]);
-        }
+        setSelectedRequests(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
     };
 
     const toggleSelectAll = () => {
@@ -248,18 +260,13 @@ export default function AdminCertificatesPage() {
         setPreviewCertificate(cert);
     };
 
-    const [isDownloadingSingle, setIsDownloadingSingle] = useState(false);
-
     const handleDownloadCertificate = async (cert: any) => {
         if (isDownloadingSingle || isGeneratingZip) return;
 
         setIsDownloadingSingle(true);
         toast.info("Preparing certificate download...");
-
-        // Use the same mechanism as bulk download: render into the hidden container
         setCurrentGeneratingCert(cert);
 
-        // Wait for render cycle
         await new Promise(resolve => setTimeout(resolve, 500));
 
         try {
@@ -294,7 +301,6 @@ export default function AdminCertificatesPage() {
         }
     };
 
-
     const handleBulkDownload = async () => {
         if (filteredIssued.length === 0) {
             toast.error("No certificates to download");
@@ -308,11 +314,8 @@ export default function AdminCertificatesPage() {
         try {
             for (let i = 0; i < filteredIssued.length; i++) {
                 const cert = filteredIssued[i];
-                const student = getStudent(cert.studentId);
-
                 setCurrentGeneratingCert(cert);
-                // Allow render
-                await new Promise(resolve => setTimeout(resolve, 100)); // 100ms delay for render
+                await new Promise(resolve => setTimeout(resolve, 100));
 
                 if (hiddenCertRef.current) {
                     const canvas = await html2canvas(hiddenCertRef.current, {
@@ -327,6 +330,7 @@ export default function AdminCertificatesPage() {
                     pdf.addImage(imgData, 'PNG', 0, 0, 297, 210);
                     const pdfBlob = pdf.output('blob');
 
+                    const student = getStudent(cert.studentId);
                     const safeName = (student?.name || 'Student').replace(/[^a-z0-9]/gi, '_');
                     const fileName = `${safeName}_${cert.courseId}_${cert.id}.pdf`;
                     zip.file(fileName, pdfBlob);
@@ -347,9 +351,12 @@ export default function AdminCertificatesPage() {
         }
     };
 
+    if (isAuthLoading || isLoadingData) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!user || user.role !== 'superadmin') return null;
+
+    const admin = user as SuperAdmin;
     const selectedStudent = selectedStudentId ? getStudent(selectedStudentId) : null;
     const selectedStudentCerts = selectedStudentId ? getStudentCertificates(selectedStudentId) : [];
-
 
     return (
         <DashboardLayout role="admin" userName={admin.name} userEmail={admin.email}>
@@ -536,7 +543,7 @@ export default function AdminCertificatesPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Schools</SelectItem>
-                                    {mockSchools.map(school => (
+                                    {schools.map(school => (
                                         <SelectItem key={school.id} value={school.id}>{school.name}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -548,7 +555,7 @@ export default function AdminCertificatesPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Courses</SelectItem>
-                                    {mockCourses.map(course => (
+                                    {courses.map(course => (
                                         <SelectItem key={course.id} value={course.id}>{course.title}</SelectItem>
                                     ))}
                                 </SelectContent>

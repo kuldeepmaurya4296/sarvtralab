@@ -12,23 +12,22 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from "@/components/ui/checkbox";
-import { Teacher } from '@/data/users';
-import { TeacherService } from '@/data/services/teacher.service';
+import { Teacher, School } from '@/data/users';
 
 interface TeacherAssignDialogProps {
     teacher: Teacher | null;
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSave: (schoolIds: string[]) => void;
+    schools: School[];
 }
 
-export function TeacherAssignDialog({ teacher, open, onOpenChange, onSave }: TeacherAssignDialogProps) {
+export function TeacherAssignDialog({ teacher, open, onOpenChange, onSave, schools }: TeacherAssignDialogProps) {
     const [selectedSchools, setSelectedSchools] = useState<string[]>([]);
-    const schools = TeacherService.getSchools();
 
     useEffect(() => {
         if (open && teacher) {
-            setSelectedSchools([...teacher.assignedSchools]);
+            setSelectedSchools(teacher.assignedSchools ? [...teacher.assignedSchools] : []);
         }
     }, [open, teacher]);
 

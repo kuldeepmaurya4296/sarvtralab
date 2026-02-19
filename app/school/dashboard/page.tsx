@@ -1,60 +1,63 @@
 'use client';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Users, BookOpen, Award } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
-import FilterTabs from '@/components/dashboard/FilterTabs';
+// import FilterTabs from '@/components/dashboard/FilterTabs';
 import { ChartCard, AreaChartComponent, MultiBarChartComponent } from '@/components/dashboard/Charts';
-import { weeklyData, courseEnrollment } from '@/data/analytics';
-import { db } from '@/data/services/database';
-import { School } from '@/data/users';
+import { getSchoolDashboardStats } from '@/lib/actions/dashboard.actions';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
+
 export default function SchoolDashboardPage() {
-    // 1. Identify School (Simulating Auth)
-    const { user, isLoading } = useAuth();
+    const { user, isLoading: isAuthLoading } = useAuth();
     const router = useRouter();
     const [period, setPeriod] = useState('Weekly');
+    const [stats, setStats] = useState<any>(null);
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== 'school')) {
+        if (!isAuthLoading && (!user || user.role !== 'school')) {
             router.push('/login');
         }
-    }, [user, isLoading, router]);
+    }, [user, isAuthLoading, router]);
 
-    if (isLoading) return <div>Loading...</div>;
+    useEffect(() => {
+        const fetchStats = async () => {
+            if (user?.role === 'school') {
+                try {
+                    const data = await getSchoolDashboardStats(user.id);
+                    setStats(data);
+                } catch (e) {
+                    console.error("Failed to fetch dashboard stats", e);
+                } finally {
+                    setIsLoadingData(false);
+                }
+            }
+        };
+
+        if (user && !isAuthLoading) {
+            fetchStats();
+        }
+    }, [user, isAuthLoading]);
+
+    if (isAuthLoading || isLoadingData) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     if (!user || user.role !== 'school') return null;
 
-    const school = user as School;
+    if (!stats) return <div>Error loading data.</div>;
 
-    // 2. Dynamic Calcs
-    const schoolStudents = useMemo(() =>
-        db.students.find(s => s.schoolId === school.id),
-        [school.id]);
-
-    const totalStudents = schoolStudents.length;
-    const activeStudents = schoolStudents.filter(s => s.enrolledCourses.length > 0).length;
-    const coursesAssigned = school.assignedCourses.length;
-
-    // Mock completion rate calc
-    const completedCount = schoolStudents.reduce((acc, s) => acc + s.completedCourses.length, 0);
-    const enrolledCount = schoolStudents.reduce((acc, s) => acc + s.enrolledCourses.length, 0);
-    const completionRate = enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0;
-
-    // Top Performers (Mock logic - just pick random students)
-    const topPerformers = schoolStudents.slice(0, 3).map(s => s.name);
+    const { schoolName, principalName, email, totalStudents, activeStudents, coursesAssigned, completionRate, topPerformers, chartData, courseEnrollment } = stats;
 
     return (
-        <DashboardLayout role="school" userName={school.principalName} userEmail={school.email}>
+        <DashboardLayout role="school" userName={principalName} userEmail={email}>
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-foreground">{school.name}</h1>
+                        <h1 className="text-2xl font-bold text-foreground">{schoolName}</h1>
                         <p className="text-muted-foreground">School Dashboard Overview</p>
                     </div>
-                    <FilterTabs options={['Weekly', 'Monthly', 'Yearly']} value={period} onChange={setPeriod} />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -66,7 +69,7 @@ export default function SchoolDashboardPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <ChartCard title="Student Activity" subtitle="Enrollments over time">
-                        <AreaChartComponent data={weeklyData} dataKey="students" color="hsl(var(--primary))" />
+                        <AreaChartComponent data={chartData} dataKey="students" color="hsl(var(--primary))" />
                     </ChartCard>
                     <ChartCard title="Course Enrollment" subtitle="Enrolled vs Completed">
                         <MultiBarChartComponent
@@ -83,13 +86,15 @@ export default function SchoolDashboardPage() {
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-6 rounded-2xl bg-card border shadow-sm">
                     <h3 className="text-lg font-semibold mb-4">Top Performers</h3>
                     <div className="space-y-3">
-                        {topPerformers.length > 0 ? topPerformers.map((name, i) => (
+                        {topPerformers && topPerformers.length > 0 ? topPerformers.map((student: any, i: number) => (
                             <div key={i} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
                                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-secondary to-primary flex items-center justify-center text-white font-bold text-sm">
                                     {i + 1}
                                 </div>
-                                <span className="font-medium">{name}</span>
-                                <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Top Scorer</span>
+                                <span className="font-medium">{student.name}</span>
+                                <span className="ml-auto inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                    {student.completed ? `${student.completed} Completed` : 'Top Scorer'}
+                                </span>
                             </div>
                         )) : <p className="text-muted-foreground text-sm">No students yet.</p>}
                     </div>
