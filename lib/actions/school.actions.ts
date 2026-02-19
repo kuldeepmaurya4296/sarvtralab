@@ -7,8 +7,7 @@ import { School } from '@/data/users';
 
 const clean = (doc: any) => {
     if (!doc) return null;
-    const { _id, ...rest } = doc;
-    return { ...rest, id: doc.id };
+    return JSON.parse(JSON.stringify(doc));
 }
 
 export async function getAllSchools(): Promise<School[]> {
@@ -53,5 +52,16 @@ export async function updateSchool(id: string, updates: Partial<School>): Promis
     } catch (e) {
         console.error("Update School Error:", e);
         return null;
+    }
+}
+
+export async function deleteSchool(id: string): Promise<boolean> {
+    await connectToDatabase();
+    try {
+        const res = await User.deleteOne({ id, role: 'school' });
+        return res.deletedCount === 1;
+    } catch (e) {
+        console.error("Delete School Error:", e);
+        return false;
     }
 }

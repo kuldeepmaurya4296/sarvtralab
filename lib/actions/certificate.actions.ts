@@ -7,8 +7,10 @@ import { Certificate as CertificateType } from '@/data/certificates';
 
 const clean = (doc: any) => {
     if (!doc) return null;
-    const { _id, ...rest } = doc;
-    return { ...rest, id: doc.id };
+    const obj = JSON.parse(JSON.stringify(doc));
+    delete obj._id;
+    delete obj.__v;
+    return obj;
 }
 
 export async function getAllCertificates(): Promise<CertificateType[]> {

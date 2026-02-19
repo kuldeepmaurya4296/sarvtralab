@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Download, Plus, Building2 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSuperAdmin, GovtOrg } from '@/data/users';
-import { GovtService } from '@/data/services/govt.service';
+import { GovtOrg } from '@/data/users';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +13,11 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+
+// Server Actions
+import { getAllGovtOrgs, createGovtOrg, updateGovtOrg, deleteGovtOrg } from '@/lib/actions/govt.actions';
 
 // Refactored Components
 import { GovtTable } from '@/components/admin/govt/GovtTable';
@@ -22,9 +26,12 @@ import { GovtFormSheet } from '@/components/admin/govt/GovtFormSheet';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 export default function AdminGovtOrgsPage() {
-    const admin = mockSuperAdmin;
-    const [orgs, setOrgs] = useState<GovtOrg[]>(GovtService.getAll());
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
+
+    const [orgs, setOrgs] = useState<GovtOrg[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     // UI States
     const [selectedOrg, setSelectedOrg] = useState<GovtOrg | null>(null);
@@ -33,6 +40,29 @@ export default function AdminGovtOrgsPage() {
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
+    useEffect(() => {
+        if (!isAuthLoading && (!user || user.role !== 'superadmin')) {
+            router.push('/login');
+        }
+    }, [user, isAuthLoading, router]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            if (user?.role === 'superadmin') {
+                try {
+                    const data = await getAllGovtOrgs();
+                    setOrgs(data || []);
+                } catch (error) {
+                    toast.error("Failed to load organizations");
+                } finally {
+                    setIsLoadingData(false);
+                }
+            }
+        };
+
+        if (user && !isAuthLoading) loadData();
+    }, [user, isAuthLoading]);
+
     const filteredOrgs = orgs.filter(org =>
         org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         org.organizationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -40,40 +70,59 @@ export default function AdminGovtOrgsPage() {
     );
 
     // Handlers
-    const handleAddOrg = (formData: any) => {
-        const newOrg = {
-            id: `GOV-${Math.random().toString(36).substr(2, 9)}`,
-            ...formData,
-            role: 'govt' as const,
-            organizationType: 'education_dept' as const,
-            jurisdiction: 'state' as const,
-            assignedSchools: [],
-            createdAt: new Date().toISOString()
-        };
-        GovtService.create(newOrg as GovtOrg);
-        // @ts-ignore
-        setOrgs([newOrg, ...orgs]);
-        toast.success("Organization added successfully");
+    const handleAddOrg = async (formData: any) => {
+        try {
+            const newOrg = await createGovtOrg({
+                ...formData,
+                role: 'govt',
+                assignedSchools: [],
+                status: 'active'
+            });
+
+            if (newOrg) {
+                setOrgs(prev => [newOrg, ...prev]);
+                toast.success("Organization added successfully");
+                setIsAddOpen(false);
+            }
+        } catch (error) {
+            toast.error("Failed to create organization");
+        }
     };
 
-    const handleEditSave = (formData: any) => {
+    const handleEditSave = async (formData: any) => {
         if (!selectedOrg) return;
-        setOrgs(orgs.map(o =>
-            o.id === selectedOrg.id ? { ...o, ...formData, status: formData.status as 'active' | 'inactive' } : o
-        ));
-        GovtService.update(selectedOrg.id, formData);
-        toast.success("Organization details updated");
+        try {
+            const updated = await updateGovtOrg(selectedOrg.id, {
+                ...formData,
+                status: formData.status as 'active' | 'inactive'
+            });
+
+            if (updated) {
+                setOrgs(prev => prev.map(o => o.id === selectedOrg.id ? updated : o));
+                toast.success("Organization details updated");
+                setIsEditOpen(false);
+            }
+        } catch (error) {
+            toast.error("Failed to update organization");
+        }
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!selectedOrg) return;
-        GovtService.delete(selectedOrg.id);
-        setOrgs(orgs.filter(o => o.id !== selectedOrg.id));
-        setIsDeleteOpen(false);
-        toast.success("Organization account deactivated");
+        try {
+            const success = await deleteGovtOrg(selectedOrg.id);
+            if (success) {
+                setOrgs(prev => prev.filter(o => o.id !== selectedOrg.id));
+                setIsDeleteOpen(false);
+                toast.success("Organization account deactivated");
+            }
+        } catch (error) {
+            toast.error("Failed to delete organization");
+        }
     };
 
     const handleExport = () => {
+        if (!orgs.length) return;
         const headers = ['ID', 'Organization', 'Contact Person', 'Email', 'State', 'Department', 'Status'];
         const csvContent = [
             headers.join(','),
@@ -95,6 +144,11 @@ export default function AdminGovtOrgsPage() {
     const openView = (org: GovtOrg) => { setSelectedOrg(org); setIsViewOpen(true); };
     const openEdit = (org: GovtOrg) => { setSelectedOrg(org); setIsEditOpen(true); };
     const openDelete = (org: GovtOrg) => { setSelectedOrg(org); setIsDeleteOpen(true); };
+
+    if (isAuthLoading || isLoadingData) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!user || user.role !== 'superadmin') return null;
+
+    const admin = user as any;
 
     return (
         <DashboardLayout role="admin" userName={admin.name} userEmail={admin.email}>

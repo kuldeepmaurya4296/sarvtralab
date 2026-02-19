@@ -8,8 +8,10 @@ import bcrypt from 'bcryptjs';
 
 const clean = (doc: any) => {
     if (!doc) return null;
-    const { _id, password, ...rest } = doc;
-    return { ...rest, id: doc.id };
+    const obj = JSON.parse(JSON.stringify(doc));
+    delete obj._id;
+    delete obj.password;
+    return obj;
 }
 
 export async function getAllTeachers(): Promise<Teacher[]> {

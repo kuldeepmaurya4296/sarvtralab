@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Search,
     Download,
@@ -8,8 +8,6 @@ import {
     School as SchoolIcon,
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSuperAdmin } from '@/data/users';
-import { SchoolService } from '@/data/services/school.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -28,6 +26,11 @@ import {
 } from "@/components/ui/select";
 import { toast } from 'sonner';
 import { School } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+
+// Server Actions
+import { getAllSchools, createSchool, updateSchool, deleteSchool } from '@/lib/actions/school.actions';
 
 // Refactored Components
 import { SchoolTable } from '@/components/admin/schools/SchoolTable';
@@ -38,9 +41,11 @@ import { SchoolAccessDialog } from '@/components/admin/schools/SchoolAccessDialo
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 
 export default function AdminSchoolsPage() {
-    const admin = mockSuperAdmin;
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
 
-    const [schools, setSchools] = useState<School[]>(SchoolService.getAll());
+    const [schools, setSchools] = useState<School[]>([]);
+    const [isLoadingData, setIsLoadingData] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [typeFilter, setTypeFilter] = useState('all');
     const [boardFilter, setBoardFilter] = useState('all');
@@ -55,13 +60,37 @@ export default function AdminSchoolsPage() {
     const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
+    useEffect(() => {
+        if (!isAuthLoading && (!user || user.role !== 'superadmin')) {
+            router.push('/login');
+        }
+    }, [user, isAuthLoading, router]);
+
+    useEffect(() => {
+        const loadData = async () => {
+            if (user?.role === 'superadmin') {
+                try {
+                    const data = await getAllSchools();
+                    setSchools(data || []);
+                } catch (error) {
+                    console.error("Failed to load schools", error);
+                    toast.error("Failed to load schools");
+                } finally {
+                    setIsLoadingData(false);
+                }
+            }
+        };
+
+        if (user && !isAuthLoading) loadData();
+    }, [user, isAuthLoading]);
+
     // Filter logic
     const filteredSchools = schools.filter(school => {
         const matchesSearch =
-            school.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            school.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            school.schoolCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            school.principalName.toLowerCase().includes(searchQuery.toLowerCase());
+            school.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            school.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            school.schoolCode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            school.principalName?.toLowerCase().includes(searchQuery.toLowerCase());
 
         const matchesType = typeFilter === 'all' || school.schoolType === typeFilter;
         const matchesBoard = boardFilter === 'all' || school.board === boardFilter;
@@ -90,64 +119,89 @@ export default function AdminSchoolsPage() {
         toast.success("Exported school data");
     };
 
-    const handleAddSchool = (formData: any) => {
-        const newSchool = {
-            id: `SCH-${Math.random().toString(36).substr(2, 9)}`,
-            ...formData,
-            principalName: 'John Doe',
-            phone: '123-456-7890',
-            email: 'admin@school.com',
-            address: '123 School Lane',
-            totalStudents: 0,
-            totalTeachers: 0,
-            subscriptionStatus: 'active',
-            subscriptionExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-            logo: '',
-            establishedYear: 2024
-        };
-        SchoolService.create(newSchool as School);
-        setSchools([newSchool as School, ...schools]);
-        toast.success("School created successfully");
-    };
-
-    const handleEditSave = (formData: any) => {
-        if (!selectedSchool) return;
-        setSchools(schools.map(s =>
-            s.id === selectedSchool.id ? {
-                ...s,
+    const handleAddSchool = async (formData: any) => {
+        try {
+            const newSchool = await createSchool({
                 ...formData,
-                schoolType: formData.schoolType as 'government' | 'private' | 'aided',
-                board: formData.board as 'CBSE' | 'ICSE' | 'State Board',
-                subscriptionPlan: formData.subscriptionPlan as 'basic' | 'standard' | 'premium'
-            } : s
-        ));
-        SchoolService.update(selectedSchool.id, formData);
-        toast.success("School details updated");
+                principalName: formData.principalName || 'Principal',
+                phone: formData.phone || '',
+                email: formData.email,
+                address: formData.address || '',
+                totalStudents: 0,
+                subscriptionStatus: 'active',
+                subscriptionExpiry: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                assignedCourses: []
+            });
+
+            if (newSchool) {
+                setSchools(prev => [newSchool, ...prev]);
+                setIsAddOpen(false);
+                toast.success("School created successfully");
+            }
+        } catch (error) {
+            console.error("Failed to create school", error);
+            toast.error("Failed to create school");
+        }
     };
 
-    const handleDelete = () => {
+    const handleEditSave = async (formData: any) => {
         if (!selectedSchool) return;
-        SchoolService.delete(selectedSchool.id);
-        setSchools(schools.filter(s => s.id !== selectedSchool.id));
-        setIsDeleteOpen(false);
-        toast.success("School deactivated/deleted");
+        try {
+            const updated = await updateSchool(selectedSchool.id, formData);
+            if (updated) {
+                setSchools(schools.map(s => s.id === selectedSchool.id ? updated : s));
+                setIsEditOpen(false);
+                toast.success("School details updated");
+            }
+        } catch (error) {
+            console.error("Failed to update school", error);
+            toast.error("Failed to update school");
+        }
     };
 
-    const handleSaveAccess = (data: any) => {
+    const handleDelete = async () => {
         if (!selectedSchool) return;
-        SchoolService.updateAccess(selectedSchool.id, data);
-        toast.success("Access settings updated");
+        try {
+            await deleteSchool(selectedSchool.id);
+            setSchools(schools.filter(s => s.id !== selectedSchool.id));
+            setIsDeleteOpen(false);
+            toast.success("School deleted successfully");
+        } catch (error) {
+            console.error("Failed to delete school", error);
+            toast.error("Failed to delete school");
+        }
     };
 
-    // Open handlers
+    const handleSaveAccess = async (data: any) => {
+        if (!selectedSchool) return;
+        // Assuming updateSchool handles password/email updates as part of its partial update if passed
+        // Or if specific logic is needed, we might need a dedicated action.
+        // For now, we'll try using updateSchool if the data contains email/password.
+        try {
+            const updated = await updateSchool(selectedSchool.id, data);
+            if (updated) {
+                setSchools(schools.map(s => s.id === selectedSchool.id ? updated : s));
+                setIsAccessOpen(false);
+                toast.success("Access settings updated");
+            }
+        } catch (error) {
+            toast.error("Failed to update access settings");
+        }
+    };
+
     const openView = (school: School) => { setSelectedSchool(school); setIsDetailsOpen(true); };
     const openEdit = (school: School) => { setSelectedSchool(school); setIsEditOpen(true); };
     const openAccess = (school: School) => { setSelectedSchool(school); setIsAccessOpen(true); };
     const openAnalytics = (school: School) => { setSelectedSchool(school); setIsAnalyticsOpen(true); };
     const openDelete = (school: School) => { setSelectedSchool(school); setIsDeleteOpen(true); };
 
+    if (isAuthLoading || isLoadingData) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!user || user.role !== 'superadmin') return null;
+
+    const admin = user as any;
+
     return (
-        <DashboardLayout role="admin" userName={admin.name} userEmail={admin.email}>
+        <DashboardLayout role="admin" userName={admin.name || 'Admin'} userEmail={admin.email}>
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -264,6 +318,7 @@ export default function AdminSchoolsPage() {
                 onSubmit={handleAddSchool}
             />
 
+            {/* Need to verify if SchoolFormSheet supports initialData and onSubmit for edit */}
             <SchoolFormSheet
                 open={isEditOpen}
                 onOpenChange={setIsEditOpen}
@@ -285,7 +340,7 @@ export default function AdminSchoolsPage() {
                 onConfirm={handleDelete}
                 title="Are you absolutely sure?"
                 description={<>This will deactivate <strong>{selectedSchool?.name}</strong>. All associated student and teacher accounts will lose access.</>}
-                confirmLabel="Deactivate"
+                confirmLabel="Delete School"
             />
         </DashboardLayout>
     );

@@ -26,7 +26,8 @@ import {
     HardDrive
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSuperAdmin } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
 import { courses } from '@/data/courses'; // Import courses for dropdown
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -89,7 +90,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from '@/components/ui/separator';
 
 export default function AdminContentPage() {
-    const admin = mockSuperAdmin;
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isAuthLoading && (!user || user.role !== 'superadmin')) {
+            router.push('/login');
+        }
+    }, [user, isAuthLoading, router]);
     const [currentFolderId, setCurrentFolderId] = useState('root');
     const [folderContents, setFolderContents] = useState<{ folders: any[], files: any[], breadcrumbs: any[] }>({ folders: [], files: [], breadcrumbs: [] });
     const [isLoading, setIsLoading] = useState(true);
@@ -342,6 +350,11 @@ export default function AdminContentPage() {
             default: return <File className="h-6 w-6 text-gray-400" />;
         }
     };
+
+    if (isAuthLoading || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!user || user.role !== 'superadmin') return null;
+
+    const admin = user as any;
 
     return (
         <DashboardLayout role="admin" userName={admin.name} userEmail={admin.email}>
