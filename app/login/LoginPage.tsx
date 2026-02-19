@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Check, Loader2, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,9 @@ import { useAuth } from '@/context/AuthContext';
 import Image from 'next/image';
 
 export default function LoginPage() {
+    const searchParams = useSearchParams();
+    const redirectPath = searchParams.get('redirect');
+
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -27,7 +31,7 @@ export default function LoginPage() {
 
         setIsLoading(true);
         try {
-            const success = await login(email, password);
+            const success = await login(email, password, redirectPath || undefined);
             if (!success) {
                 setError('Invalid email or password. Please try again.');
             }

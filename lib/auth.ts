@@ -39,6 +39,7 @@ export const authOptions: NextAuthOptions = {
                     name: user.name,
                     email: user.email,
                     role: user.role,
+                    enrolledCourses: user.enrolledCourses
                 };
             },
         }),
@@ -48,10 +49,14 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.role = user.role;
                 token.id = user.id;
+                token.enrolledCourses = (user as any).enrolledCourses;
             }
             if (trigger === "update" && session?.user) {
                 token.name = session.user.name;
-                // other properties
+                // Update enrolled courses if provided in session update
+                if (session.user.enrolledCourses) {
+                    token.enrolledCourses = session.user.enrolledCourses;
+                }
             }
             return token;
         },
@@ -59,6 +64,7 @@ export const authOptions: NextAuthOptions = {
             if (session.user) {
                 session.user.role = token.role as string;
                 session.user.id = token.id as string;
+                (session.user as any).enrolledCourses = token.enrolledCourses;
             }
             return session;
         },

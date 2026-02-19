@@ -16,14 +16,13 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-// Mock data for chart until backend supports it
 const studentWatchTime = [
-    { day: 'Mon', minutes: 45 },
-    { day: 'Tue', minutes: 60 },
-    { day: 'Wed', minutes: 30 },
-    { day: 'Thu', minutes: 90 },
-    { day: 'Fri', minutes: 45 },
-    { day: 'Sat', minutes: 120 },
+    { day: 'Mon', minutes: 0 },
+    { day: 'Tue', minutes: 0 },
+    { day: 'Wed', minutes: 0 },
+    { day: 'Thu', minutes: 0 },
+    { day: 'Fri', minutes: 0 },
+    { day: 'Sat', minutes: 0 },
     { day: 'Sun', minutes: 0 },
 ];
 
@@ -36,8 +35,8 @@ export default function StudentDashboardPage() {
     const [stats, setStats] = useState({
         totalEnrolled: 0,
         certificatesCount: 0,
-        watchTime: "20.8 hrs",
-        overallProgress: "65%"
+        watchTime: "0 hrs",
+        overallProgress: "0%"
     });
     const [recentMaterials, setRecentMaterials] = useState<any[]>([]);
     const [isLoadingData, setIsLoadingData] = useState(true);
@@ -101,11 +100,11 @@ export default function StudentDashboardPage() {
     // Mock progress calculation based on fetched course
     const progressData = currentCourse ? {
         courseName: currentCourse.title,
-        progress: 65, // Mock percentage
+        progress: 0, // Default to 0 until real progress tracking is implemented
         totalLessons: currentCourse.curriculum?.reduce((acc: number, mod: any) => acc + (mod.lessons?.length || 0), 0) || 0,
-        completedLessons: 8, // Mock
-        timeSpent: 1250,
-        lastAccessed: '2 days ago'
+        completedLessons: 0,
+        timeSpent: 0,
+        lastAccessed: 'Never'
     } : null;
 
     const handleDownload = (item: string) => {

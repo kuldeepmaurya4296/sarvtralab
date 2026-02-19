@@ -11,7 +11,7 @@ interface AuthContextType {
     role: UserRole | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (email: string, pass: string) => Promise<boolean>;
+    login: (email: string, pass: string, redirectPath?: string) => Promise<boolean>;
     logout: () => void;
 }
 
@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const user = session?.user ? (session.user as unknown as User) : null;
     const role = user?.role as UserRole || null;
 
-    const login = async (email: string, pass: string): Promise<boolean> => {
+    const login = async (email: string, pass: string, redirectPath?: string): Promise<boolean> => {
         try {
             const result = await signIn('credentials', {
                 redirect: false,
@@ -44,6 +44,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Get fresh session to handle redirection immediately
             const freshSession = await getSession();
             router.refresh();
+
+            if (redirectPath) {
+                router.push(redirectPath);
+                return true;
+            }
 
             if (freshSession?.user) {
                 const userRole = (freshSession.user as any).role;

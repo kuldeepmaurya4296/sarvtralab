@@ -12,7 +12,13 @@ const UserSchema = new Schema({
 
     // Student fields
     schoolId: String,
-    schoolName: String,
+    schoolName: {
+        type: String,
+        required: function () {
+            // @ts-ignore
+            return this.role === 'student' || this.role === 'school';
+        }
+    },
     grade: String,
     parentName: String,
     parentPhone: String,

@@ -21,11 +21,11 @@ export async function registerUser(data: any) {
             createdAt: new Date().toISOString()
         });
 
-        const { password, ...userWithoutPassword } = newUser.toObject();
-        return { user: { ...userWithoutPassword, id: newUser.id } };
-    } catch (error) {
+        const { password, _id, __v, ...userWithoutPassword } = newUser.toObject();
+        return { user: { ...userWithoutPassword, id: newUser.id, _id: (_id as any).toString() } };
+    } catch (error: any) {
         console.error("Register Error:", error);
-        return { error: 'Registration failed' };
+        return { error: error.message || 'Registration failed' };
     }
 }
 

@@ -124,7 +124,7 @@ export default function CourseDetailContent({ course }: CourseDetailContentProps
                                     </div>
                                 )}
 
-                                <Link href="/signup" className="block w-full mb-3">
+                                <Link href={`/checkout/course/${course.id}`} className="block w-full mb-3">
                                     <Button className="w-full h-12 text-lg font-bold">
                                         Enroll Now
                                     </Button>

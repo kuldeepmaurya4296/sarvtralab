@@ -42,6 +42,11 @@ export default function SignupPage() {
             return;
         }
 
+        if ((selectedRole === 'student' || selectedRole === 'school') && !formData.schoolName) {
+            toast.error('School name is required');
+            return;
+        }
+
         if (formData.password.length < 6) {
             toast.error('Password must be at least 6 characters');
             return;
@@ -200,15 +205,17 @@ export default function SignupPage() {
                                 </div>
                             </div>
 
-                            {/* School Name (conditional) */}
-                            {selectedRole === 'school' && (
+                            {/* School Name (mandatory for students & schools) */}
+                            {(selectedRole === 'school' || selectedRole === 'student') && (
                                 <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
                                     className="space-y-1.5"
                                 >
-                                    <label className="block text-sm font-medium text-foreground">School / Institution Name</label>
+                                    <label className="block text-sm font-medium text-foreground">
+                                        {selectedRole === 'student' ? 'School Name' : 'School / Institution Name'}
+                                    </label>
                                     <div className="relative">
                                         <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
                                         <input
@@ -216,7 +223,7 @@ export default function SignupPage() {
                                             type="text"
                                             value={formData.schoolName}
                                             onChange={handleChange}
-                                            placeholder="Enter school or institution name"
+                                            placeholder={selectedRole === 'student' ? "Enter your school name" : "Enter institution name"}
                                             className="w-full px-4 py-3.5 rounded-xl border bg-background pl-12 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
                                             required
                                             disabled={isLoading}

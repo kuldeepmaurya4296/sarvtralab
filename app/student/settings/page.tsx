@@ -1,16 +1,34 @@
 'use client';
 
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockStudents } from '@/data/users';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { User, Lock, Mail, Save } from 'lucide-react';
 
-export default function StudentSettingsPage() {
-    const student = mockStudents.find(s => s.id === 'std-001');
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react'; // removed unused useState
 
-    if (!student) return <div>Loading...</div>;
+export default function StudentSettingsPage() {
+    const { user, isLoading: isAuthLoading } = useAuth();
+    const router = useRouter();
+
+    // In a real app, you might fetch additional data if the user object is minimal.
+    // For now, we assume user object has what we need, or we fail gracefully.
+
+    useEffect(() => {
+        if (!isAuthLoading && (!user || user.role !== 'student')) {
+            router.push('/login');
+        }
+    }, [user, isAuthLoading, router]);
+
+    if (isAuthLoading || !user) {
+        return <div className="p-8">Loading...</div>;
+    }
+
+    // Cast to any to access specific fields if not strictly typed in context yet
+    const student = user as any;
 
     return (
         <DashboardLayout role="student" userName={student.name} userEmail={student.email}>

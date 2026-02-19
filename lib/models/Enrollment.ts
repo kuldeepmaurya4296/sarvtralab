@@ -1,7 +1,7 @@
 import mongoose, { Schema, Model, Document } from 'mongoose';
 
 export interface IEnrollment extends Document {
-    student: mongoose.Types.ObjectId;
+    student: string;
     course: mongoose.Types.ObjectId; // Actually referencing Course model (via custom ID or ObjectId?) 
     // Given current system uses custom ID strings for courses, we might need to stick to that or migrate.
     // Requirement says "relational referencing usage (via ObjectId)". 
@@ -16,7 +16,7 @@ export interface IEnrollment extends Document {
 }
 
 const EnrollmentSchema = new Schema<IEnrollment>({
-    student: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    student: { type: String, required: true, index: true }, // Changed from ObjectId to String (usr-id)
     course: { type: Schema.Types.ObjectId, ref: 'Course', required: true, index: true },
     enrolledAt: { type: Date, default: Date.now },
     status: {
@@ -35,5 +35,11 @@ const EnrollmentSchema = new Schema<IEnrollment>({
 // Prevent duplicate enrollments
 EnrollmentSchema.index({ student: 1, course: 1 }, { unique: true });
 
+// Prevent model overwrite in development, but FORCE schema refresh if structure changed
+if (process.env.NODE_ENV === 'development') {
+    if (mongoose.models.Enrollment) {
+        delete mongoose.models.Enrollment;
+    }
+}
 const Enrollment: Model<IEnrollment> = mongoose.models.Enrollment || mongoose.model<IEnrollment>('Enrollment', EnrollmentSchema);
 export default Enrollment;
