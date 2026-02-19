@@ -25,7 +25,8 @@ import {
   Shield,
   Headphones,
   Award,
-  ShoppingCart
+  ShoppingCart,
+  Target
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -77,6 +78,7 @@ const roleMenuItems: Record<string, MenuItem[]> = {
     { icon: BookOpen, label: 'Courses', href: '/admin/courses' },
     { icon: Award, label: 'Certificates', href: '/admin/certificates' },
     { icon: FileText, label: 'Content', href: '/admin/content' },
+    { icon: Target, label: 'CRM', href: '/admin/crm' },
     { icon: Shield, label: 'Govt Orgs', href: '/admin/govt' },
     { icon: Settings, label: 'Settings', href: '/admin/settings' }
   ],
@@ -89,6 +91,7 @@ const roleMenuItems: Record<string, MenuItem[]> = {
     { icon: BookOpen, label: 'Courses', href: '/admin/courses' },
     { icon: Award, label: 'Certificates', href: '/admin/certificates' },
     { icon: FileText, label: 'Content', href: '/admin/content' },
+    { icon: Target, label: 'CRM', href: '/admin/crm' },
     { icon: Shield, label: 'Govt Orgs', href: '/admin/govt' },
     { icon: Settings, label: 'Settings', href: '/admin/settings' }
   ],

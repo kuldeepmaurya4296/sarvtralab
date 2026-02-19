@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Users, School, IndianRupee, TrendingUp, Building } from 'lucide-react';
+import { Users, School, IndianRupee, TrendingUp, Building, Target } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
 // import FilterTabs from '@/components/dashboard/FilterTabs';
@@ -48,7 +48,7 @@ export default function AdminDashboardPage() {
     if (!stats) return <div>Error loading data.</div>;
 
     const admin = user as any;
-    const { totalStudents, totalSchools, totalRevenue, pieData, recentSchools, chartData, courseEnrollment } = stats;
+    const { totalStudents, totalSchools, totalRevenue, pieData, recentSchools, chartData, courseEnrollment, crmStats } = stats;
 
     const completionRate = "78.5"; // Keeping static
 
@@ -67,6 +67,7 @@ export default function AdminDashboardPage() {
                     <StatCard icon={School} title="Partner Schools" value={totalSchools} change="+8" changeType="positive" color="secondary" />
                     <StatCard icon={IndianRupee} title="Total Revenue" value={`₹${(totalRevenue / 100000).toFixed(1)}L`} change="+18%" changeType="positive" color="success" />
                     <StatCard icon={TrendingUp} title="Completion Rate" value={`${completionRate}%`} color="accent" />
+                    <StatCard icon={Target} title="Total Leads" value={crmStats?.totalLeads || 0} change={crmStats?.conversionRate + '% Conv.'} changeType="neutral" color="primary" />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

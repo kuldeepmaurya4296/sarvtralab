@@ -4,6 +4,7 @@
 import connectToDatabase from '@/lib/mongoose';
 import User from '@/lib/models/User';
 import Course from '@/lib/models/Course';
+import Lead from '@/lib/models/Lead';
 import { School } from '@/data/users';
 
 /* -------------------------------------------------------------------------- */
@@ -204,6 +205,11 @@ export async function getAdminDashboardStats() {
         { $group: { _id: '$completedCourses', count: { $sum: 1 } } }
     ]);
 
+    // 7. CRM Stats (Leads & Conversion)
+    const totalLeads = await Lead.countDocuments();
+    const convertedLeads = await Lead.countDocuments({ status: 'Converted' });
+    const conversionRate = totalLeads > 0 ? ((convertedLeads / totalLeads) * 100).toFixed(1) : 0;
+
     // Get course names
     const allCourses = await Course.find({}).select('id title').lean();
 
@@ -226,7 +232,12 @@ export async function getAdminDashboardStats() {
         pieData,
         recentSchools,
         chartData, // For LineChart
-        courseEnrollment // For BarChart
+        courseEnrollment, // For BarChart
+        crmStats: {
+            totalLeads,
+            convertedLeads,
+            conversionRate
+        }
     };
 }
 
