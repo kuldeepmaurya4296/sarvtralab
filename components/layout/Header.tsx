@@ -2,17 +2,32 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Menu, X, GraduationCap, ChevronDown } from 'lucide-react';
+import { Menu, X, GraduationCap, ChevronDown, LayoutDashboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { navLinks } from '@/data/content';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const isActive = (path: string) => pathname === path;
+
+  const getDashboardUrl = () => {
+    const role = (session?.user as any)?.role;
+    switch (role) {
+      case 'student': return '/student/dashboard';
+      case 'school': return '/school/dashboard';
+      case 'teacher': return '/teacher/dashboard';
+      case 'govt': return '/govt/dashboard';
+      case 'superadmin': return '/admin/dashboard';
+      case 'helpsupport': return '/helpsupport/dashboard';
+      default: return '/login';
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background md:bg-background/80 md:backdrop-blur-xl border-b">
@@ -51,16 +66,20 @@ const Header = () => {
 
           {/* Auth Buttons */}
           <div className="hidden lg:flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">
-                Log In
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button size="sm" className="bg-gradient-to-r from-primary to-primary/80 hover:opacity-90">
-                Get Started
-              </Button>
-            </Link>
+            {session?.user ? (
+              <Link href={getDashboardUrl()}>
+                <Button size="sm" className="bg-gradient-to-r from-primary to-primary/80 hover:opacity-90 gap-2">
+                  <LayoutDashboard className="w-4 h-4" />
+                  Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/login">
+                <Button size="sm" className="bg-gradient-to-r from-primary to-primary/80 hover:opacity-90">
+                  Get Started
+                </Button>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -101,14 +120,18 @@ const Header = () => {
                 </Link>
               ))}
               <div className="flex gap-2 mt-4 pt-4 border-t">
-                <Link href="/login" className="flex-1" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="outline" className="w-full">
-                    Log In
-                  </Button>
-                </Link>
-                <Link href="/signup" className="flex-1" onClick={() => setIsMenuOpen(false)}>
-                  <Button className="w-full">Get Started</Button>
-                </Link>
+                {session?.user ? (
+                  <Link href={getDashboardUrl()} className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                    <Button className="w-full gap-2">
+                      <LayoutDashboard className="w-4 h-4" />
+                      Dashboard
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/login" className="flex-1" onClick={() => setIsMenuOpen(false)}>
+                    <Button className="w-full">Get Started</Button>
+                  </Link>
+                )}
               </div>
             </nav>
           </motion.div>

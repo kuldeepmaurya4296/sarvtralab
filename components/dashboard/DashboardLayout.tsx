@@ -93,13 +93,19 @@ const roleMenuItems: Record<string, MenuItem[]> = {
     { icon: Settings, label: 'Settings', href: '/admin/settings' }
   ],
   teacher: [
-    { icon: LayoutDashboard, label: 'Dashboard', href: '/student/dashboard' },
-    { icon: BookOpen, label: 'My Courses', href: '/student/courses' },
-    { icon: Award, label: 'Certificates', href: '/student/certificates' },
-    { icon: FileText, label: 'Materials', href: '/student/materials' },
-    { icon: ShoppingCart, label: 'Order', href: 'https://www.yantraq.com/products' },
-    { icon: Headphones, label: 'Support', href: '/student/support' },
-    { icon: Settings, label: 'Settings', href: '/student/settings' }
+    { icon: LayoutDashboard, label: 'Dashboard', href: '/teacher/dashboard' },
+    { icon: BookOpen, label: 'My Courses', href: '/teacher/courses' },
+    { icon: Users, label: 'Students', href: '/teacher/students' },
+    { icon: FileText, label: 'Materials', href: '/teacher/materials' },
+    { icon: BarChart3, label: 'Reports', href: '/teacher/reports' },
+    { icon: Settings, label: 'Settings', href: '/teacher/settings' }
+  ],
+  helpsupport: [
+    { icon: LayoutDashboard, label: 'Dashboard', href: '/helpsupport/dashboard' },
+    { icon: Headphones, label: 'Tickets', href: '/helpsupport/tickets' },
+    { icon: Users, label: 'Students', href: '/helpsupport/students' },
+    { icon: FileText, label: 'Knowledge Base', href: '/helpsupport/knowledge-base' },
+    { icon: Settings, label: 'Settings', href: '/helpsupport/settings' }
   ]
 };
 

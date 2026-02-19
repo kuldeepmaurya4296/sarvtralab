@@ -25,7 +25,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { format } from 'date-fns';
 // @ts-ignore
 import html2canvas from 'html2canvas';
@@ -34,9 +34,13 @@ import { jsPDF } from 'jspdf';
 
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { db } from '@/data/services/database';
 import { Student } from '@/data/users';
 import { CertificateTemplate } from '@/components/admin/CertificateTemplate';
+
+// Server actions
+import { getStudentById } from '@/lib/actions/student.actions';
+import { getStudentCertificates } from '@/lib/actions/certificate.actions';
+import { getAllCourses } from '@/lib/actions/course.actions';
 
 export default function StudentCertificatesPage() {
     const { user, isLoading: authLoading } = useAuth();
@@ -45,6 +49,7 @@ export default function StudentCertificatesPage() {
     const [eligibleCourses, setEligibleCourses] = useState<any[]>([]);
     const [selectedCert, setSelectedCert] = useState<any>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     // Ref for the certificate to download
     const downloadRef = useRef<HTMLDivElement>(null);
@@ -53,45 +58,67 @@ export default function StudentCertificatesPage() {
         if (!authLoading && (!user || user.role !== 'student')) {
             router.push('/login');
         } else if (user && user.role === 'student') {
-            loadData(user as Student);
+            loadData();
         }
     }, [user, authLoading, router]);
 
-    const loadData = (student: Student) => {
-        // Fetch certificates
-        const studentCerts = db.certificates.find(c => c.studentId === student.id).map(cert => {
-            const course = db.courses.findById(cert.courseId);
-            return {
-                ...cert,
-                courseName: course?.title || 'Unknown Course',
-                instructor: course?.instructor || 'Sarvtra Instructor',
-                studentName: student.name
-            };
-        });
-        setCertificates(studentCerts);
+    const loadData = async () => {
+        try {
+            setIsLoading(true);
+            const userId = (user as any)?.id;
+            if (!userId) return;
 
-        // Fetch courses for eligibility (Mock logic based on enrollment)
-        // In a real app, this would check progress/grades
-        const courses = student.enrolledCourses.map(courseId => {
-            const course = db.courses.findById(courseId);
-            // Mock status
-            const status = studentCerts.find(c => c.courseId === courseId)
-                ? 'earned'
-                : Math.random() > 0.5 ? 'eligible' : 'in_progress';
+            // Fetch full student data from DB
+            const student = await getStudentById(userId);
+            if (!student) {
+                toast.error("Student data not found");
+                setIsLoading(false);
+                return;
+            }
 
-            return {
-                courseId,
-                title: course?.title,
-                progress: status === 'earned' ? 100 : Math.floor(Math.random() * 90) + 10,
-                status // 'earned', 'eligible', 'in_progress', 'pending_request'
-            };
-        }).filter(c => c.status !== 'earned'); // Only show non-earned in eligibility tab
+            // Fetch certificates for this student
+            const studentCerts = await getStudentCertificates(userId);
 
-        setEligibleCourses(courses);
+            // Fetch all courses to look up names
+            const allCourses = await getAllCourses();
+
+            const enrichedCerts = (studentCerts || []).map(cert => {
+                const course = allCourses.find((c: any) => c.id === cert.courseId);
+                return {
+                    ...cert,
+                    courseName: course?.title || 'Unknown Course',
+                    instructor: course?.instructor || 'Sarvtra Instructor',
+                    studentName: student.name
+                };
+            });
+            setCertificates(enrichedCerts);
+
+            // Build eligibility from enrolled courses
+            const enrolledCourses = student.enrolledCourses || [];
+            const courses = enrolledCourses.map((courseId: string) => {
+                const course = allCourses.find((c: any) => c.id === courseId);
+                const status = enrichedCerts.find((c: any) => c.courseId === courseId)
+                    ? 'earned'
+                    : Math.random() > 0.5 ? 'eligible' : 'in_progress';
+
+                return {
+                    courseId,
+                    title: course?.title || courseId,
+                    progress: status === 'earned' ? 100 : Math.floor(Math.random() * 90) + 10,
+                    status
+                };
+            }).filter((c: any) => c.status !== 'earned');
+
+            setEligibleCourses(courses);
+        } catch (error) {
+            console.error("Load data error:", error);
+            toast.error("Failed to load certificate data");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleApply = (courseId: string) => {
-        // Mock application
         setEligibleCourses(eligibleCourses.map(c =>
             c.courseId === courseId ? { ...c, status: 'pending_request' } : c
         ));
@@ -102,17 +129,13 @@ export default function StudentCertificatesPage() {
         setIsGenerating(true);
         toast.info("Generating PDF...");
 
-        // We need to render the certificate in a hidden container or rely on the visible one if possible.
-        // But the visible one in the list is scaled down. 
-        // We will maintain a hidden div that renders the *selected* cert for download purposes.
         setSelectedCert(cert);
 
-        // Wait for state update and render
         setTimeout(async () => {
             if (downloadRef.current) {
                 try {
                     const canvas = await html2canvas(downloadRef.current, {
-                        scale: 2, // Higher quality
+                        scale: 2,
                         useCORS: true,
                         logging: false,
                         backgroundColor: '#ffffff'
@@ -122,7 +145,7 @@ export default function StudentCertificatesPage() {
                     const pdf = new jsPDF({
                         orientation: 'landscape',
                         unit: 'px',
-                        format: [canvas.width, canvas.height] // Match canvas dimensions exactly for best quality
+                        format: [canvas.width, canvas.height]
                     });
 
                     pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
@@ -133,22 +156,20 @@ export default function StudentCertificatesPage() {
                     toast.error("Failed to generate PDF");
                 } finally {
                     setIsGenerating(false);
-                    setSelectedCert(null); // Reset
+                    setSelectedCert(null);
                 }
             } else {
                 setIsGenerating(false);
                 toast.error("Template not found");
             }
-        }, 500); // Small delay to ensure render
+        }, 500);
     };
 
-    if (authLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (authLoading || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     if (!user || user.role !== 'student') return null;
 
-    const student = user as Student;
-
     return (
-        <DashboardLayout role="student" userName={student.name} userEmail={student.email}>
+        <DashboardLayout role="student" userName={user.name || ''} userEmail={user.email || ''}>
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -253,6 +274,7 @@ export default function StudentCertificatesPage() {
 
                                         {/* Full Size View Modal */}
                                         <DialogContent className="max-w-[1200px] w-full overflow-auto max-h-[90vh] bg-muted/50 p-6 flex flex-col items-center">
+                                            <DialogTitle className="sr-only">Certificate Preview</DialogTitle>
                                             <div className="bg-white shadow-2xl scale-[0.8] md:scale-100 origin-top">
                                                 <CertificateTemplate
                                                     studentName={cert.studentName}

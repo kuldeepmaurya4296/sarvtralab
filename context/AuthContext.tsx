@@ -1,8 +1,8 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser } from '@/lib/actions/auth.actions';
+import { useSession, signIn, signOut, getSession } from 'next-auth/react';
 import { User, UserRole } from '@/data/users';
 import { toast } from 'sonner';
 
@@ -11,99 +11,65 @@ interface AuthContextType {
     role: UserRole | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (email: string, password: string) => Promise<boolean>;
+    login: (email: string, pass: string) => Promise<boolean>;
     logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [role, setRole] = useState<UserRole | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const { data: session, status } = useSession();
     const router = useRouter();
+    const isLoading = status === 'loading';
 
-    useEffect(() => {
-        // Check local storage on mount
-        const storedUser = localStorage.getItem('lms_user');
-        if (storedUser) {
-            try {
-                const parsedUser = JSON.parse(storedUser);
-                setUser(parsedUser);
-                setRole(parsedUser.role);
-            } catch (e) {
-                console.error("Failed to parse stored user", e);
-                localStorage.removeItem('lms_user');
-            }
-        }
-        setIsLoading(false);
-    }, []);
-
+    // Cast session user to custom User type. Be careful about missing fields.
+    const user = session?.user ? (session.user as unknown as User) : null;
+    const role = user?.role as UserRole || null;
 
     const login = async (email: string, pass: string): Promise<boolean> => {
-        setIsLoading(true);
         try {
-            const user = await loginUser(email, pass);
+            const result = await signIn('credentials', {
+                redirect: false,
+                email,
+                password: pass,
+            });
 
-            if (user) {
-                handleSuccess(user);
-                return true;
+            if (result?.error) {
+                toast.error('Invalid credentials');
+                return false;
             }
 
-            toast.error('Invalid credentials');
-            return false;
+            toast.success('Welcome back!');
+
+            // Get fresh session to handle redirection immediately
+            const freshSession = await getSession();
+            router.refresh();
+
+            if (freshSession?.user) {
+                const userRole = (freshSession.user as any).role;
+                switch (userRole) {
+                    case 'student': router.push('/student/dashboard'); break;
+                    case 'school': router.push('/school/dashboard'); break;
+                    case 'teacher': router.push('/teacher/dashboard'); break;
+                    case 'govt': router.push('/govt/dashboard'); break;
+                    case 'superadmin': router.push('/admin/dashboard'); break;
+                    case 'helpsupport': router.push('/helpsupport/dashboard'); break;
+                    default: router.push('/');
+                }
+            } else {
+                router.push('/');
+            }
+
+            return true;
         } catch (error) {
             console.error("Login Error:", error);
             toast.error('Login failed');
             return false;
-        } finally {
-            setIsLoading(false);
         }
     };
 
-    const handleSuccess = (userData: User) => {
-        setUser(userData);
-        setRole(userData.role);
-        localStorage.setItem('lms_user', JSON.stringify(userData));
-        toast.success(`Welcome back, ${userData.name}!`);
-
-        // Redirect based on role
-        switch (userData.role) {
-            case 'student':
-                router.push('/student/dashboard');
-                break;
-            case 'school':
-                router.push('/school/dashboard');
-                break;
-            case 'teacher':
-                // Assuming teacher has a dashboard or uses school dashboard?
-                // Current structure suggests school dashboard or maybe a simpler view. 
-                // Let's default to school dashboard for now or check if there is a teacher route.
-                // Looking at file structure, there is no root 'teacher' route, but 'school' has subfolders.
-                // Actually, previous list_dir showed 'admin', 'govt', 'school', 'student'.
-                // Teacher might login to 'school' portal or 'admin' portal?
-                // Let's assume '/school/dashboard' for now or handle later.
-                router.push('/school/dashboard');
-                break;
-            case 'govt':
-                router.push('/govt/dashboard');
-                break;
-            case 'superadmin':
-                router.push('/admin/dashboard');
-                break;
-            case 'helpsupport':
-                // Assume admin or separate?
-                router.push('/admin/help-support');
-                break;
-            default:
-                router.push('/');
-        }
-    };
-
-    const logout = () => {
-        setUser(null);
-        setRole(null);
-        localStorage.removeItem('lms_user');
+    const logout = async () => {
+        await signOut({ redirect: false });
         router.push('/login');
         toast.info('Logged out successfully');
     };
