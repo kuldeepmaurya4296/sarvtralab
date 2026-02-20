@@ -9,6 +9,8 @@ import Payment from '@/lib/models/Payment';
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth";
 import SchoolModel from '@/lib/models/School';
+import Report from '@/lib/models/Report';
+import Material from '@/lib/models/Material';
 import { School } from '@/data/users';
 import mongoose from 'mongoose';
 
@@ -149,43 +151,26 @@ export async function getAdminDashboardStats() {
     await connectToDatabase();
 
     // 1. Counts
-    const totalStudents = await User.countDocuments({ role: 'student' });
-    const totalSchools = await User.countDocuments({ role: 'school' });
+    const [totalStudents, totalSchools, totalTeachers] = await Promise.all([
+        User.countDocuments({ role: 'student' }),
+        User.countDocuments({ role: 'school' }),
+        User.countDocuments({ role: 'teacher' })
+    ]);
 
     // 2. Revenue (Aggregation)
-    // Using $lookup to join courses and calculate revenue
-    const revenueResult = await User.aggregate([
-        { $match: { role: 'student' } },
-        { $unwind: '$enrolledCourses' },
-        {
-            $lookup: {
-                from: 'courses',
-                localField: 'enrolledCourses',
-                foreignField: 'id',
-                as: 'courseDetails'
-            }
-        },
-        { $unwind: '$courseDetails' },
-        {
-            $group: {
-                _id: null,
-                totalRevenue: { $sum: '$courseDetails.price' }
-            }
-        }
+    const revenueResult = await Payment.aggregate([
+        { $match: { status: 'Completed' } },
+        { $group: { _id: null, totalRevenue: { $sum: '$amount' } } }
     ]);
 
     const totalRevenue = revenueResult[0]?.totalRevenue || 0;
 
     // 3. Course Distribution
-    const foundationCount = await Course.countDocuments({ category: 'foundation' });
-    const intermediateCount = await Course.countDocuments({ category: 'intermediate' });
-    const advancedCount = await Course.countDocuments({ category: 'advanced' });
-
-    const pieData = [
-        { name: 'Foundation', value: foundationCount },
-        { name: 'Intermediate', value: intermediateCount },
-        { name: 'Advanced', value: advancedCount }
-    ];
+    const categories = ['foundation', 'intermediate', 'advanced'];
+    const pieData = await Promise.all(categories.map(async (cat) => ({
+        name: cat.charAt(0).toUpperCase() + cat.slice(1),
+        value: await Course.countDocuments({ category: cat })
+    })));
 
     // 4. Recent Schools
     const recentSchoolsDocs = await User.find({ role: 'school' })
@@ -211,58 +196,48 @@ export async function getAdminDashboardStats() {
             }
         },
         { $sort: { _id: 1 } },
-        { $limit: 12 }
+        { $limit: 6 }
     ]);
 
-    // Fill in missing months? For now just return what data exists
     const chartData = growthResult.map(g => ({
-        name: g._id, // e.g. "2024-02"
+        name: g._id,
         students: g.students,
         schools: g.schools
     }));
 
-    // 6. Course Enrollment vs Completion
-    // Separate aggregations for clarity
-    const enrolledCounts = await User.aggregate([
-        { $match: { role: 'student' } },
-        { $unwind: '$enrolledCourses' },
-        { $group: { _id: '$enrolledCourses', count: { $sum: 1 } } }
+    // 6. Project Completion Rate (Real Calculation)
+    const enrollmentStats = await Enrollment.aggregate([
+        { $group: { _id: null, avgProgress: { $avg: "$progress" } } }
     ]);
+    const avgCompletionProgress = enrollmentStats[0]?.avgProgress || 0;
 
-    const completedCounts = await User.aggregate([
-        { $match: { role: 'student' } },
-        { $unwind: '$completedCourses' },
-        { $group: { _id: '$completedCourses', count: { $sum: 1 } } }
-    ]);
-
-    // 7. CRM Stats (Leads & Conversion)
-    const totalLeads = await Lead.countDocuments();
-    const convertedLeads = await Lead.countDocuments({ status: 'Converted' });
-    const conversionRate = totalLeads > 0 ? ((convertedLeads / totalLeads) * 100).toFixed(1) : 0;
-
-    // Get course names
-    const allCourses = await Course.find({}).select('id title').lean();
-
-    const courseEnrollment = allCourses.map((c: any) => {
-        const enrolled = enrolledCounts.find(e => e._id === c.id)?.count || 0;
-        const completed = completedCounts.find(cItem => cItem._id === c.id)?.count || 0;
+    // 7. Course Enrollment vs Completion
+    const allCourses = await Course.find({}).select('id title').limit(5).lean();
+    const courseEnrollment = await Promise.all(allCourses.map(async (c: any) => {
+        const enrolled = await Enrollment.countDocuments({ course: c._id });
+        const completed = await Enrollment.countDocuments({ course: c._id, status: 'Completed' });
         return {
             course: c.title,
             enrolled,
             completed
         };
-    })
-        .sort((a, b) => b.enrolled - a.enrolled)
-        .slice(0, 5);
+    }));
+
+    // 8. CRM Stats
+    const totalLeads = await Lead.countDocuments();
+    const convertedLeads = await Lead.countDocuments({ status: 'Converted' });
+    const conversionRate = totalLeads > 0 ? ((convertedLeads / totalLeads) * 100).toFixed(1) : "0";
 
     return {
         totalStudents,
         totalSchools,
+        totalTeachers,
         totalRevenue,
+        avgCompletionRate: avgCompletionProgress.toFixed(1),
         pieData,
         recentSchools,
-        chartData, // For LineChart
-        courseEnrollment, // For BarChart
+        chartData,
+        courseEnrollment,
         crmStats: {
             totalLeads,
             convertedLeads,
@@ -281,7 +256,6 @@ export async function getGovtDashboardStats() {
 
     const totalSchools = await User.countDocuments({ role: 'school' });
     const totalStudents = await User.countDocuments({ role: 'student' });
-    const totalReports = await Course.countDocuments({}); // Placeholder for logic if needed
 
     // Schools List
     const schoolsDocs = await User.find({ role: 'school' }).limit(10).lean();
@@ -292,22 +266,31 @@ export async function getGovtDashboardStats() {
         totalStudents: s.totalStudents || 0
     }));
 
-    // Calculate overall completion rate across all students if data allows
-    const students = await User.find({ role: 'student' }).select('enrolledCourses completedCourses').lean();
-    let totalEnrolled = 0;
-    let totalCompleted = 0;
-    students.forEach((s: any) => {
-        totalEnrolled += (s.enrolledCourses?.length || 0);
-        totalCompleted += (s.completedCourses?.length || 0);
-    });
-    const avgCompletion = totalEnrolled > 0 ? Math.round((totalCompleted / totalEnrolled) * 100) : 0;
+    // Calculate overall completion rate across all students
+    const enrollmentStats = await Enrollment.aggregate([
+        { $group: { _id: null, avgProgress: { $avg: "$progress" } } }
+    ]);
+    const avgCompletion = enrollmentStats[0]?.avgProgress || 0;
+
+    // Grade Distribution (Dynamic)
+    const gradeStats = await User.aggregate([
+        { $match: { role: 'student' } },
+        { $group: { _id: '$grade', students: { $sum: 1 } } },
+        { $sort: { _id: 1 } }
+    ]);
+
+    const gradeDistribution = gradeStats.map(g => ({
+        grade: g._id || 'N/A',
+        students: g.students
+    }));
 
     return {
         totalSchools,
         totalStudents,
-        avgCompletion: `${avgCompletion}%`,
-        reportsCount: await Course.countDocuments({}), // Just a number for UI
-        schools
+        avgCompletion: `${avgCompletion.toFixed(1)}%`,
+        reportsCount: await Report.countDocuments({}),
+        schools,
+        gradeDistribution
     };
 }
 
@@ -337,6 +320,8 @@ export async function getTeacherDashboardStats(teacherId: string) {
         const enrollments = await Enrollment.find({ course: { $in: courseIds } }).lean() as any[];
         const totalStudents = new Set(enrollments.map(e => e.student)).size;
 
+        const totalMaterials = await Material.countDocuments({ courseId: { $in: courses.map(c => c.id) } });
+
         const avgCompletion = enrollments.length > 0
             ? (enrollments.reduce((acc, e) => acc + (e.progress || 0), 0) / enrollments.length).toFixed(1)
             : "0";
@@ -364,6 +349,7 @@ export async function getTeacherDashboardStats(teacherId: string) {
         return {
             totalCourses,
             totalStudents,
+            totalMaterials,
             avgCompletion,
             trendData,
             recentCourses: courses.slice(0, 5).map(c => ({

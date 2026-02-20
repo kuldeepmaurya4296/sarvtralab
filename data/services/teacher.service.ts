@@ -24,6 +24,7 @@ export const TeacherService = {
     },
 
     getSchoolNames: (schoolIds: string[]) => {
+        if (!schoolIds || !Array.isArray(schoolIds)) return '';
         return db.schools
             .find(s => schoolIds.includes(s.id))
             .map(s => s.name)

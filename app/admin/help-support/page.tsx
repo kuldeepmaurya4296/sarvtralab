@@ -82,22 +82,6 @@ export default function AdminHelpSupportPage() {
     const [staffList, setStaffList] = useState<any[]>([]);
     const [tickets, setTickets] = useState<any[]>([]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const [ticketsData, staffData] = await Promise.all([
-                getAllTickets(),
-                getSupportStaff()
-            ]);
-            setTickets(ticketsData);
-            setStaffList(staffData);
-            setIsLoading(false);
-        };
-        fetchData();
-    }, []);
-
-    if (authLoading || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading Help & Support...</div>;
-    if (!admin || admin.role !== 'superadmin') return null;
-
     // Actions
     const [selectedStaff, setSelectedStaff] = useState<any>(null);
     const [selectedTicket, setSelectedTicket] = useState<any>(null);
@@ -118,6 +102,22 @@ export default function AdminHelpSupportPage() {
 
     // Form Data Ticket
     const [ticketStatus, setTicketStatus] = useState('');
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const [ticketsData, staffData] = await Promise.all([
+                getAllTickets(),
+                getSupportStaff()
+            ]);
+            setTickets(ticketsData);
+            setStaffList(staffData);
+            setIsLoading(false);
+        };
+        fetchData();
+    }, []);
+
+    if (authLoading || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading Help & Support...</div>;
+    if (!admin || admin.role !== 'superadmin') return null;
 
 
     const filteredTickets = tickets.filter(ticket =>

@@ -54,7 +54,7 @@ export default function TeacherDashboardPage() {
     const statCards = [
         { title: 'Assigned Courses', value: stats?.totalCourses || '0', icon: BookOpen, change: '+0', changeType: 'positive' as const },
         { title: 'Total Students', value: stats?.totalStudents || '0', icon: Users, change: '+0', changeType: 'positive' as const },
-        { title: 'Materials Uploaded', value: '36', icon: FileText, change: '+0', changeType: 'positive' as const },
+        { title: 'Materials Uploaded', value: stats?.totalMaterials || '0', icon: FileText, change: '+0', changeType: 'positive' as const },
         { title: 'Avg. Completion', value: `${stats?.avgCompletion || 0}%`, icon: TrendingUp, change: '+0', changeType: 'positive' as const },
     ];
 

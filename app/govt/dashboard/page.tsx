@@ -74,7 +74,7 @@ export default function GovtDashboardPage() {
                         <AreaChartComponent data={monthlyData} dataKey="students" color="hsl(var(--accent))" />
                     </ChartCard>
                     <ChartCard title="Grade Distribution" subtitle="Students by grade">
-                        <BarChartComponent data={gradeDistribution} dataKey="students" xAxisKey="grade" color="hsl(var(--primary))" />
+                        <BarChartComponent data={stats.gradeDistribution || []} dataKey="students" xAxisKey="grade" color="hsl(var(--primary))" />
                     </ChartCard>
                 </div>
 

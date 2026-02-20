@@ -10,6 +10,7 @@ export interface IEnrollment extends Document {
     enrolledAt: Date;
     status: 'Active' | 'Completed' | 'Dropped';
     progress: number; // 0-100
+    watchTime: number; // in minutes
     currentLesson?: string; // ID of current lesson
     grade?: string;
     completionDate?: Date;
@@ -25,6 +26,7 @@ const EnrollmentSchema = new Schema<IEnrollment>({
         default: 'Active'
     },
     progress: { type: Number, default: 0 },
+    watchTime: { type: Number, default: 0 },
     currentLesson: { type: String },
     grade: { type: String },
     completionDate: { type: Date }
