@@ -16,7 +16,7 @@ export interface ISchool extends Document {
     pincode: string;
     phone: string;
     websiteUrl?: string;
-    subscriptionPlan: 'basic' | 'standard' | 'premium';
+    subscriptionPlan: string;
     subscriptionExpiry: string;
     assignedCourses: string[]; // Still keep course IDs or convert to ObjectIds? 
     // Usually courses are platform-wide but assigned to schools.
@@ -38,7 +38,7 @@ const SchoolSchema = new Schema<ISchool>({
     pincode: { type: String, required: true },
     phone: { type: String, required: true },
     websiteUrl: { type: String },
-    subscriptionPlan: { type: String, enum: ['basic', 'standard', 'premium'], default: 'basic' },
+    subscriptionPlan: { type: String, default: 'Basic' },
     subscriptionExpiry: { type: String },
     assignedCourses: [{ type: String }],
     createdAt: { type: String, default: () => new Date().toISOString() }

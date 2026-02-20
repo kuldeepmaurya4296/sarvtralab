@@ -11,11 +11,12 @@ The application has been tested for dynamic data fetching and MongoDB synchroniz
 
 ### 2.1 Super Admin Dashboard
 - **Status:** Mostly Dynamic
-- **Dynamic Elements:** Total Students, Partner Schools, Total Revenue, Recent Schools, Course Performance (Enrolled vs Completed), Growth Trends (Students & Schools).
+- **Dynamic Elements:** Total Students, Partner Schools, Total Revenue, Recent Schools, Course Performance (Enrolled vs Completed), Growth Trends (Students & Schools), **Subscription Plan Management**.
 - **Gaps (Static/Hardcoded):**
   - Completion Rate is hardcoded at **78.5%**.
   - All "Change" percentages (e.g., +12%, +18%) are static.
   - CRM Conversion Rate is derived from Leads but the "change" text is static.
+  - **Plan features** on the public page are dynamic, but some metadata might still be static.
 
 ### 2.2 Student Dashboard
 - **Status:** Partially Dynamic
@@ -36,9 +37,10 @@ The application has been tested for dynamic data fetching and MongoDB synchroniz
 
 ### 2.4 School Dashboard
 - **Status:** Mostly Dynamic
-- **Dynamic Elements:** Total Students, Active Students, Courses Assigned, Completion Rate, Student Activity, Top Performers.
+- **Dynamic Elements:** Total Students, Active Students, Courses Assigned, Completion Rate, Student Activity, Top Performers, **Active Subscription Plan (Real-time DB Fetch)**.
 - **Gaps (Static/Hardcoded):**
   - "Change" indicators (+12, +3%) are hardcoded.
+  - Subscription Expiry date might be static if not set in DB.
 
 ### 2.5 Govt Dashboard
 - **Status:** Partially Dynamic

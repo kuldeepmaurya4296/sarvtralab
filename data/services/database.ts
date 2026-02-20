@@ -88,6 +88,7 @@ import { mockIssuedCertificates } from '../certificates';
 import { materials } from '../materials';
 
 import { mockReports } from '../reports';
+import { schoolPlans } from '../products';
 
 class MongoDBCluster {
     students = new Collection('Students', mockStudents);
@@ -99,6 +100,7 @@ class MongoDBCluster {
     certificates = new Collection('Certificates', mockIssuedCertificates);
     materials = new Collection('Materials', materials);
     reports = new Collection('Reports', mockReports);
+    plans = new Collection('Plans', schoolPlans);
 
     // Cross-collection helper
     populate(doc: any, fields: string[]) {

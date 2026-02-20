@@ -26,7 +26,8 @@ import {
   Headphones,
   Award,
   ShoppingCart,
-  Target
+  Target,
+  CreditCard
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -72,6 +73,7 @@ const roleMenuItems: Record<string, MenuItem[]> = {
   admin: [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/admin/dashboard' },
     { icon: School, label: 'Schools', href: '/admin/schools' },
+    { icon: CreditCard, label: 'Plans', href: '/admin/plans' },
     { icon: Users, label: 'Students', href: '/admin/students' },
     { icon: GraduationCap, label: 'Teachers', href: '/admin/teachers' },
     { icon: Headphones, label: 'Help Support', href: '/admin/help-support' },
@@ -85,6 +87,7 @@ const roleMenuItems: Record<string, MenuItem[]> = {
   superadmin: [
     { icon: LayoutDashboard, label: 'Dashboard', href: '/admin/dashboard' },
     { icon: School, label: 'Schools', href: '/admin/schools' },
+    { icon: CreditCard, label: 'Plans', href: '/admin/plans' },
     { icon: Users, label: 'Students', href: '/admin/students' },
     { icon: GraduationCap, label: 'Teachers', href: '/admin/teachers' },
     { icon: Headphones, label: 'Help Support', href: '/admin/help-support' },

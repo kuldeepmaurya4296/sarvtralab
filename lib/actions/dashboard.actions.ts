@@ -11,6 +11,7 @@ import { authOptions } from "../auth";
 import SchoolModel from '@/lib/models/School';
 import Report from '@/lib/models/Report';
 import Material from '@/lib/models/Material';
+import Plan from '@/lib/models/Plan';
 import { School } from '@/data/users';
 import mongoose from 'mongoose';
 
@@ -128,6 +129,14 @@ export async function getSchoolDashboardStats(schoolId: string) {
         students: g.students
     }));
 
+    // 7. Get Plan Details
+    const planDetails = await Plan.findOne({
+        $or: [
+            { name: school.subscriptionPlan },
+            { id: school.subscriptionPlan }
+        ]
+    }).lean();
+
     return {
         schoolName: school.name || school.schoolName || "Unknown School",
         principalName: school.principalName || "Not Set",
@@ -138,7 +147,12 @@ export async function getSchoolDashboardStats(schoolId: string) {
         completionRate,
         topPerformers,
         courseEnrollment,
-        chartData
+        chartData,
+        subscription: {
+            planName: school.subscriptionPlan || 'Basic',
+            expiry: school.subscriptionExpiry || 'N/A',
+            details: planDetails || null
+        }
     };
 }
 

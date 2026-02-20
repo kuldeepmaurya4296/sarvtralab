@@ -1,24 +1,8 @@
 
-import { BookOpen, Award, TrendingUp, Shield } from 'lucide-react';
+import connectToDatabase from '../lib/mongoose';
+import Plan from '../lib/models/Plan';
 
-export interface Plan {
-    id: string;
-    name: string;
-    description: string;
-    price: string;
-    period: string;
-    features: string[];
-    popular: boolean;
-    status: 'active' | 'inactive';
-}
-
-export interface Benefit {
-    title: string;
-    description: string;
-    iconName: string;
-}
-
-export const schoolPlans: Plan[] = [
+const initialPlans = [
     {
         id: 'pln-001',
         name: 'Basic',
@@ -34,7 +18,8 @@ export const schoolPlans: Plan[] = [
             'Standard robotics kits'
         ],
         popular: false,
-        status: 'active'
+        status: 'active',
+        type: 'school'
     },
     {
         id: 'pln-002',
@@ -53,7 +38,8 @@ export const schoolPlans: Plan[] = [
             'Parent portal access'
         ],
         popular: true,
-        status: 'active'
+        status: 'active',
+        type: 'school'
     },
     {
         id: 'pln-003',
@@ -72,29 +58,30 @@ export const schoolPlans: Plan[] = [
             'API access'
         ],
         popular: false,
-        status: 'active'
+        status: 'active',
+        type: 'school'
     }
 ];
 
-export const schoolBenefits: Benefit[] = [
-    {
-        iconName: 'BookOpen',
-        title: 'CBSE Aligned Curriculum',
-        description: 'Fully aligned with NCF 2023, NEP 2020, and CBSE Skill Education Framework'
-    },
-    {
-        iconName: 'Award',
-        title: 'Certified Training',
-        description: 'Comprehensive teacher training with certification and ongoing support'
-    },
-    {
-        iconName: 'TrendingUp',
-        title: 'Analytics Dashboard',
-        description: 'Real-time insights into student progress and learning outcomes'
-    },
-    {
-        iconName: 'Shield',
-        title: 'Complete Kit Solution',
-        description: 'Industry-standard robotics kits with maintenance and replacement support'
+async function seedPlans() {
+    console.log('🌱 Starting Plan Seeding...');
+    await connectToDatabase();
+
+    for (const planData of initialPlans) {
+        const existing = await Plan.findOne({ id: planData.id });
+        if (existing) {
+            console.log(`ℹ️ Plan ${planData.name} already exists, skipping...`);
+        } else {
+            await Plan.create(planData);
+            console.log(`✅ Created plan: ${planData.name}`);
+        }
     }
-];
+
+    console.log('✅ Plan Seeding Completed!');
+    process.exit(0);
+}
+
+seedPlans().catch(err => {
+    console.error('❌ Seeding Failed:', err);
+    process.exit(1);
+});

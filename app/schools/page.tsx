@@ -9,9 +9,11 @@ import {
 } from 'lucide-react';
 import PublicLayout from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/button';
-import { schoolPlans, schoolBenefits } from '@/data/products';
+import { schoolBenefits } from '@/data/products';
 import { organizationDetails } from '@/data/organization';
 import * as Icons from 'lucide-react';
+import { getAllPlans } from '@/lib/actions/plan.actions';
+import { useState, useEffect } from 'react';
 
 const IconComponent = ({ name, className }: { name: string; className?: string }) => {
     const Icon = (Icons as any)[name];
@@ -20,6 +22,23 @@ const IconComponent = ({ name, className }: { name: string; className?: string }
 };
 
 export default function SchoolsPage() {
+    const [plans, setPlans] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchPlans = async () => {
+            try {
+                const data = await getAllPlans();
+                setPlans(data);
+            } catch (e) {
+                console.error("Failed to fetch plans", e);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchPlans();
+    }, []);
+
     return (
         <PublicLayout>
             {/* Hero Section */}
@@ -125,9 +144,9 @@ export default function SchoolsPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                        {schoolPlans.map((plan, index) => (
+                        {!isLoading ? plans.map((plan, index) => (
                             <motion.div
-                                key={plan.name}
+                                key={plan.id}
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
@@ -147,7 +166,7 @@ export default function SchoolsPage() {
                                     <span className="text-muted-foreground">{plan.period}</span>
                                 </div>
                                 <ul className="space-y-3 mb-8">
-                                    {plan.features.map((feature) => (
+                                    {plan.features?.map((feature: string) => (
                                         <li key={feature} className="flex items-start gap-2">
                                             <Check className="w-5 h-5 text-green-500 mt-0.5 shrink-0" />
                                             <span className="text-sm">{feature}</span>
@@ -166,7 +185,11 @@ export default function SchoolsPage() {
                                     </Button>
                                 </div>
                             </motion.div>
-                        ))}
+                        )) : (
+                            <div className="col-span-full py-20 text-center text-muted-foreground">
+                                Loading plans...
+                            </div>
+                        )}
                     </div>
                 </div>
             </section>

@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { Users, BookOpen, Award } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 // import FilterTabs from '@/components/dashboard/FilterTabs';
 import { ChartCard, AreaChartComponent, MultiBarChartComponent } from '@/components/dashboard/Charts';
 import { getSchoolDashboardStats } from '@/lib/actions/dashboard.actions';
@@ -66,6 +68,39 @@ export default function SchoolDashboardPage() {
                     <StatCard icon={BookOpen} title="Courses Assigned" value={coursesAssigned} color="accent" />
                     <StatCard icon={Award} title="Completion Rate" value={`${completionRate}%`} change="+3%" changeType="positive" color="success" />
                 </div>
+
+                {stats.subscription && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-6 rounded-2xl bg-primary/5 border border-primary/10 shadow-sm relative overflow-hidden"
+                    >
+                        <div className="absolute top-0 right-0 p-4 opacity-10">
+                            <Award className="h-24 w-24" />
+                        </div>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                            <div>
+                                <h3 className="text-lg font-semibold flex items-center gap-2">
+                                    <Award className="h-5 w-5 text-primary" />
+                                    Active Subscription: <span className="text-primary">{stats.subscription.planName}</span>
+                                </h3>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    Valid until: <span className="font-medium text-foreground">{stats.subscription.expiry}</span>
+                                </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {stats.subscription.details?.features?.slice(0, 3).map((feature: string, i: number) => (
+                                    <div key={i} className="px-3 py-1 rounded-full bg-white border text-xs font-medium text-muted-foreground">
+                                        {feature}
+                                    </div>
+                                ))}
+                            </div>
+                            <Button variant="outline" size="sm" className="bg-white" asChild>
+                                <Link href="/schools">View Plans</Link>
+                            </Button>
+                        </div>
+                    </motion.div>
+                )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <ChartCard title="Student Activity" subtitle="Enrollments over time">
