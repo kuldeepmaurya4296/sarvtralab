@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Play, Clock, Award, ChevronRight, Download, FileText } from 'lucide-react';
+import { Play, Clock, Award, ChevronRight, Download, FileText, Trash2, AlertCircle } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { getStudentEnrolledCourses } from '@/lib/actions/student.actions';
+import { getStudentEnrolledCourses, removeEnrollment } from '@/lib/actions/student.actions';
 import { getCoursesByIds, getAllCourses } from '@/lib/actions/course.actions';
+import { toast } from 'sonner';
 
 export default function StudentCoursesPage() {
     const { user, isLoading: isAuthLoading } = useAuth();
@@ -77,6 +78,24 @@ export default function StudentCoursesPage() {
         if (user && !isAuthLoading) fetchData();
     }, [user, isAuthLoading]);
 
+    const handleDeleteEnrollment = async (enrollmentId: string) => {
+        if (!window.confirm("Are you sure you want to remove this course from your dashboard? This will delete your progress for this enrollment.")) {
+            return;
+        }
+
+        try {
+            const res = await removeEnrollment(enrollmentId);
+            if (res.success) {
+                toast.success("Course removed successfully");
+                setEnrolledCourses(prev => prev.filter(c => c.enrollmentId !== enrollmentId));
+            } else {
+                toast.error(res.error || "Failed to remove course");
+            }
+        } catch (error) {
+            toast.error("An error occurred while removing the course");
+        }
+    };
+
     if (isAuthLoading || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
     if (!user || user.role !== 'student') return null;
 
@@ -106,40 +125,76 @@ export default function StudentCoursesPage() {
                                     transition={{ delay: index * 0.1 }}
                                     className="bg-card border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
                                 >
-                                    <div className="h-40 bg-muted relative overflow-hidden">
-                                        <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center text-white">
-                                            {course.title}
-                                        </div>
-                                        <div className="absolute top-3 left-3 text-xs font-semibold px-2 py-1 bg-background/90 rounded backdrop-blur-sm shadow-sm">
-                                            {course.category}
-                                        </div>
-                                    </div>
-                                    <div className="p-5">
-                                        <h3 className="font-semibold text-lg mb-1 line-clamp-1">{course.title}</h3>
-                                        <p className="text-xs text-muted-foreground mb-4">Last accessed {course.lastAccessed}</p>
-
-                                        <div className="space-y-2 mb-4">
-                                            <div className="flex justify-between text-xs font-medium">
-                                                <span>{Math.round(course.progress)}% Complete</span>
-                                                <span>{course.completedModules}/{course.totalModules} Lessons</span>
+                                    {course.isUnavailable ? (
+                                        <div className="flex flex-col h-full bg-destructive/5 border-destructive/20 transition-all">
+                                            <div className="h-40 bg-muted/50 flex flex-col items-center justify-center text-destructive p-4 text-center">
+                                                <AlertCircle className="w-10 h-10 mb-2 opacity-50" />
+                                                <span className="text-sm font-semibold">Course Deleted or Unavailable</span>
                                             </div>
-                                            <Progress value={course.progress} className="h-2" />
+                                            <div className="p-5 flex flex-col flex-1 justify-between">
+                                                <div className="mb-4">
+                                                    <h3 className="font-semibold text-lg text-foreground line-clamp-1">{course.title}</h3>
+                                                    <p className="text-sm text-muted-foreground mt-1">This course is no longer available on the platform.</p>
+                                                </div>
+                                                <Button
+                                                    variant="destructive"
+                                                    className="w-full"
+                                                    onClick={() => handleDeleteEnrollment(course.enrollmentId)}
+                                                >
+                                                    <Trash2 className="w-4 h-4 mr-2" />
+                                                    Remove from My Courses
+                                                </Button>
+                                            </div>
                                         </div>
+                                    ) : (
+                                        <>
+                                            <div className="h-40 bg-muted relative overflow-hidden">
+                                                <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center text-white p-4 text-center">
+                                                    {course.title}
+                                                </div>
+                                                <div className="absolute top-3 left-3 text-xs font-semibold px-2 py-1 bg-background/90 rounded backdrop-blur-sm shadow-sm">
+                                                    {course.category}
+                                                </div>
+                                            </div>
+                                            <div className="p-5">
+                                                <h3 className="font-semibold text-lg mb-1 line-clamp-1">{course.title}</h3>
+                                                <p className="text-xs text-muted-foreground mb-4">Last accessed {course.lastAccessed}</p>
 
-                                        <div className="bg-muted/50 p-3 rounded-lg mb-4">
-                                            <p className="text-xs text-muted-foreground mb-1">Up Next:</p>
-                                            <p className="text-sm font-medium flex items-center gap-2 line-clamp-1">
-                                                <Play className="w-3 h-3 fill-current shrink-0" />
-                                                {course.nextLesson}
-                                            </p>
-                                        </div>
+                                                <div className="space-y-2 mb-4">
+                                                    <div className="flex justify-between text-xs font-medium">
+                                                        <span>{Math.round(course.progress)}% Complete</span>
+                                                        <span>{course.completedModules}/{course.totalModules} Lessons</span>
+                                                    </div>
+                                                    <Progress value={course.progress} className="h-2" />
+                                                </div>
 
-                                        <Link href={`/student/courses/${course.id}`}>
-                                            <Button className="w-full">
-                                                Continue Learning
-                                            </Button>
-                                        </Link>
-                                    </div>
+                                                <div className="bg-muted/50 p-3 rounded-lg mb-4">
+                                                    <p className="text-xs text-muted-foreground mb-1">Up Next:</p>
+                                                    <p className="text-sm font-medium flex items-center gap-2 line-clamp-1">
+                                                        <Play className="w-3 h-3 fill-current shrink-0" />
+                                                        {course.nextLesson}
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex gap-2">
+                                                    <Link href={`/student/courses/${course.id}`} className="flex-1">
+                                                        <Button className="w-full">
+                                                            Continue Learning
+                                                        </Button>
+                                                    </Link>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="text-muted-foreground hover:text-destructive shrink-0"
+                                                        title="Remove from Dashboard"
+                                                        onClick={() => handleDeleteEnrollment(course.enrollmentId)}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
                                 </motion.div>
                             ))}
                         </div>

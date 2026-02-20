@@ -170,7 +170,9 @@ export async function getStudentEnrolledCourses(userId: string) {
             .lean() as any[];
 
         return enrollments.map(e => ({
-            ...clean(e.course),
+            ...(e.course ? clean(e.course) : { title: 'Course Unavailable', id: null }),
+            enrollmentId: e._id.toString(),
+            isUnavailable: !e.course,
             progress: e.progress || 0,
             completedLessons: e.completedLessons || 0,
             status: e.status,
@@ -179,6 +181,28 @@ export async function getStudentEnrolledCourses(userId: string) {
     } catch (e) {
         console.error("Get Student Enrolled Courses Error:", e);
         return [];
+    }
+}
+
+export async function removeEnrollment(enrollmentId: string) {
+    const session = await getServerSession(authOptions);
+    if (!session) throw new Error("Unauthorized");
+
+    await connectToDatabase();
+    try {
+        const enrollment = await Enrollment.findById(enrollmentId);
+        if (!enrollment) throw new Error("Enrollment not found");
+
+        // Only allow student to delete their own, or admin
+        if (enrollment.student !== session.user.id && session.user.role !== 'superadmin' && session.user.role !== 'admin') {
+            throw new Error("Unauthorized");
+        }
+
+        await Enrollment.findByIdAndDelete(enrollmentId);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Remove Enrollment Error:", error);
+        return { success: false, error: error.message };
     }
 }
 
