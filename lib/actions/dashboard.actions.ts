@@ -8,7 +8,9 @@ import Enrollment from '@/lib/models/Enrollment';
 import Payment from '@/lib/models/Payment';
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth";
+import SchoolModel from '@/lib/models/School';
 import { School } from '@/data/users';
+import mongoose from 'mongoose';
 
 /* -------------------------------------------------------------------------- */
 /*                               School Dashboard                             */
@@ -17,19 +19,49 @@ import { School } from '@/data/users';
 export async function getSchoolDashboardStats(schoolId: string) {
     await connectToDatabase();
 
-    // 1. Get School Details
-    const schoolDoc = await User.findOne({ id: schoolId, role: 'school' }).lean();
-    if (!schoolDoc) throw new Error("School not found");
-    const school = schoolDoc as any;
+    const isObjectId = mongoose.Types.ObjectId.isValid(schoolId);
 
-    // 2. Get Students for this school
-    const students = await User.find({ schoolId, role: 'student' }).lean();
+    // 1. Get School Admin User details
+    // It's safer to check both the custom 'id' and the MongoDB '_id'
+    const schoolUserDoc = await User.findOne({
+        $or: [
+            { id: schoolId },
+            ...(isObjectId ? [{ _id: schoolId }] : [])
+        ],
+        role: 'school'
+    }).lean();
+
+    if (!schoolUserDoc) {
+        console.error(`School Admin user not found for ID: ${schoolId}`);
+        throw new Error("School not found");
+    }
+
+    const schoolUser = schoolUserDoc as any;
+    let combinedSchoolData = { ...schoolUser };
+
+    // 2. Fetch School Entity details if linked
+    const actualSchoolObjectId = schoolUser.schoolId;
+    if (actualSchoolObjectId) {
+        const schoolEntity = await SchoolModel.findById(actualSchoolObjectId).lean();
+        if (schoolEntity) {
+            combinedSchoolData = { ...combinedSchoolData, ...(schoolEntity as any) };
+        }
+    }
+
+    const school = combinedSchoolData;
+
+    // 3. Get Students for this school
+    // Query by the actual schoolId reference (ObjectId)
+    const students = await User.find({
+        schoolId: actualSchoolObjectId,
+        role: 'student'
+    }).lean();
 
     const totalStudents = students.length;
     const activeStudents = students.filter((s: any) => s.enrolledCourses && s.enrolledCourses.length > 0).length;
     const coursesAssigned = school.assignedCourses?.length || 0;
 
-    // 3. Calculate Completion Rate
+    // 4. Calculate Completion Rate
     let totalEnrolled = 0;
     let totalCompleted = 0;
 
@@ -66,7 +98,7 @@ export async function getSchoolDashboardStats(schoolId: string) {
         completed: courseStats[c.id]?.completed || 0
     })).slice(0, 5); // Limit to top 5 for UI
 
-    // 4. Top Performers
+    // 5. Top Performers
     const sortedStudents = [...students].sort((a: any, b: any) => {
         return (b.completedCourses?.length || 0) - (a.completedCourses?.length || 0);
     });
@@ -77,9 +109,8 @@ export async function getSchoolDashboardStats(schoolId: string) {
     }));
 
     // Monthly Growth (School Students)
-    // Simplified: Just last 6 months of student creation
     const growthData = await User.aggregate([
-        { $match: { role: 'student', schoolId: schoolId } },
+        { $match: { role: 'student', schoolId: actualSchoolObjectId } },
         {
             $group: {
                 _id: { $dateToString: { format: "%Y-%m", date: { $toDate: "$createdAt" } } },
@@ -96,8 +127,8 @@ export async function getSchoolDashboardStats(schoolId: string) {
     }));
 
     return {
-        schoolName: school.name,
-        principalName: school.principalName,
+        schoolName: school.name || school.schoolName || "Unknown School",
+        principalName: school.principalName || "Not Set",
         email: school.email,
         totalStudents,
         activeStudents,
