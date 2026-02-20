@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import {
     Sheet,
     SheetContent,
@@ -119,11 +120,46 @@ export function StudentFormSheet({ open, onOpenChange, initialData, mode, onSubm
                             </SelectTrigger>
                             <SelectContent>
                                 {schools.map(school => (
-                                    <SelectItem key={school.id} value={school.id}>{school.name}</SelectItem>
+                                    <SelectItem key={school.id} value={school.id}>
+                                        {school.name} ({school.email})
+                                    </SelectItem>
                                 ))}
+                                <SelectItem value="new_school" className="font-bold text-primary">
+                                    + Add New School...
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
+
+                    {formData.schoolId === 'new_school' && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="space-y-4 pt-2 pb-4 border-y border-dashed mt-2 px-1"
+                        >
+                            <p className="text-xs font-medium text-primary uppercase tracking-wider">New School Details</p>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="newSchoolName" className="text-right text-xs">School Name</Label>
+                                <Input
+                                    id="newSchoolName"
+                                    placeholder="Enter school name"
+                                    onChange={(e) => setFormData({ ...formData, ...{ newSchoolName: e.target.value } } as any)}
+                                    className="col-span-3 h-8 text-sm"
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="newSchoolEmail" className="text-right text-xs">School Email</Label>
+                                <Input
+                                    id="newSchoolEmail"
+                                    type="email"
+                                    placeholder="Enter school email"
+                                    onChange={(e) => setFormData({ ...formData, ...{ newSchoolEmail: e.target.value } } as any)}
+                                    className="col-span-3 h-8 text-sm"
+                                />
+                            </div>
+                        </motion.div>
+                    )}
+
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="status" className="text-right">Status</Label>
                         <Select

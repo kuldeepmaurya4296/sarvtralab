@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { registerUser } from '@/lib/actions/auth.actions';
 import { signIn } from 'next-auth/react';
 import { toast } from 'sonner';
+import { getPublicSchools } from '@/lib/actions/school.actions';
 
 type UserRole = 'student' | 'school' | 'govt';
 
@@ -22,16 +23,58 @@ export default function SignupPage() {
     const router = useRouter();
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [schools, setSchools] = useState<any[]>([]);
+    const [isLoadingSchools, setIsLoadingSchools] = useState(true);
+
     const [formData, setFormData] = useState({
         name: '',
         email: '',
         password: '',
+        schoolId: '',
         schoolName: '',
+        newSchoolName: '',
+        newSchoolEmail: '',
     });
     const [selectedRole, setSelectedRole] = useState<UserRole>('student');
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    useEffect(() => {
+        const fetchSchools = async () => {
+            try {
+                const data = await getPublicSchools();
+                setSchools(data as any);
+            } catch (error) {
+                console.error("Failed to fetch schools:", error);
+            } finally {
+                setIsLoadingSchools(false);
+            }
+        };
+        fetchSchools();
+    }, []);
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSchoolChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const val = e.target.value;
+        const selected = schools.find(s => s.id === val);
+
+        let derivedSchoolName = '';
+        if (selected) {
+            derivedSchoolName = selected.name;
+        } else if (val === 'new_school') {
+            derivedSchoolName = '';
+        } else if (val === 'no_school') {
+            derivedSchoolName = 'Independent Learner';
+        } else {
+            derivedSchoolName = formData.schoolName;
+        }
+
+        setFormData({
+            ...formData,
+            schoolId: val,
+            schoolName: derivedSchoolName
+        });
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -42,9 +85,29 @@ export default function SignupPage() {
             return;
         }
 
-        if ((selectedRole === 'student' || selectedRole === 'school') && !formData.schoolName) {
-            toast.error('School name is required');
-            return;
+        if ((selectedRole === 'student')) {
+            if (formData.schoolId === 'new_school') {
+                if (!formData.newSchoolName || !formData.newSchoolEmail) {
+                    toast.error('Please enter new school name and email');
+                    return;
+                }
+            } else if (!formData.schoolId) {
+                toast.error('Please select a school or choose "Not in School"');
+                return;
+            }
+        }
+
+        if (selectedRole === 'school') {
+            if (formData.schoolId === 'new_school') {
+                if (!formData.newSchoolName || !formData.newSchoolEmail) {
+                    toast.error('Please enter new school name and email');
+                    return;
+                }
+            } else if (!formData.schoolId) {
+                // Schools must identify themselves or create new
+                toast.error('Please select or create your institution');
+                return;
+            }
         }
 
         if (formData.password.length < 6) {
@@ -54,10 +117,15 @@ export default function SignupPage() {
 
         setIsLoading(true);
         try {
-            const result = await registerUser({
+            const registrationData = {
                 ...formData,
                 role: selectedRole,
-            });
+                schoolName: formData.schoolId === 'new_school' ? formData.newSchoolName : formData.schoolName,
+                schoolEmail: formData.schoolId === 'new_school' ? formData.newSchoolEmail : undefined,
+                createNewSchool: formData.schoolId === 'new_school'
+            };
+
+            const result = await registerUser(registrationData);
 
             if (result.error) {
                 toast.error(result.error);
@@ -205,30 +273,81 @@ export default function SignupPage() {
                                 </div>
                             </div>
 
-                            {/* School Name (mandatory for students & schools) */}
+                            {/* School Selection (mandatory for students & schools) */}
                             {(selectedRole === 'school' || selectedRole === 'student') && (
                                 <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: 'auto' }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="space-y-1.5"
+                                    className="space-y-3"
                                 >
                                     <label className="block text-sm font-medium text-foreground">
                                         {selectedRole === 'student' ? 'School Name' : 'School / Institution Name'}
                                     </label>
                                     <div className="relative">
-                                        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                                        <input
-                                            name="schoolName"
-                                            type="text"
-                                            value={formData.schoolName}
-                                            onChange={handleChange}
-                                            placeholder={selectedRole === 'student' ? "Enter your school name" : "Enter institution name"}
-                                            className="w-full px-4 py-3.5 rounded-xl border bg-background pl-12 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                                        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none z-10" />
+                                        <select
+                                            name="schoolId"
+                                            value={formData.schoolId}
+                                            onChange={handleSchoolChange}
+                                            className="w-full px-4 py-3.5 rounded-xl border bg-background pl-12 pr-10 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm appearance-none cursor-pointer"
                                             required
-                                            disabled={isLoading}
-                                        />
+                                            disabled={isLoading || isLoadingSchools}
+                                        >
+                                            <option value="" disabled>
+                                                {isLoadingSchools ? 'Loading schools...' : 'Select your school'}
+                                            </option>
+                                            <option value="no_school" className="font-medium text-foreground">
+                                                I am not in any school (Individual)
+                                            </option>
+                                            {schools.map((school: any) => (
+                                                <option key={school.id} value={school.id}>
+                                                    {school.name} ({school.email})
+                                                </option>
+                                            ))}
+                                            <option value="new_school" className="font-semibold text-primary">
+                                                + Add New School...
+                                            </option>
+                                        </select>
+                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                                     </div>
+
+                                    {/* Conditional New School Fields */}
+                                    {formData.schoolId === 'new_school' && (
+                                        <motion.div
+                                            initial={{ opacity: 0, height: 0 }}
+                                            animate={{ opacity: 1, height: 'auto' }}
+                                            className="space-y-3 pt-2 pb-3 border-t border-dashed"
+                                        >
+                                            <p className="text-xs font-semibold text-primary uppercase tracking-wider">New School Details</p>
+                                            <div className="relative">
+                                                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                                <input
+                                                    name="newSchoolName"
+                                                    type="text"
+                                                    value={formData.newSchoolName}
+                                                    onChange={handleChange}
+                                                    placeholder="Enter new school name"
+                                                    className="w-full px-4 py-3 rounded-xl border bg-background pl-12 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                                                    required
+                                                    disabled={isLoading}
+                                                />
+                                            </div>
+                                            <div className="relative">
+                                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                                                <input
+                                                    name="newSchoolEmail"
+                                                    type="email"
+                                                    value={formData.newSchoolEmail}
+                                                    onChange={handleChange}
+                                                    placeholder="Enter school email"
+                                                    className="w-full px-4 py-3 rounded-xl border bg-background pl-12 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all text-sm"
+                                                    required
+                                                    disabled={isLoading}
+                                                />
+                                            </div>
+                                        </motion.div>
+                                    )}
                                 </motion.div>
                             )}
 

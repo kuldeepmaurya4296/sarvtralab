@@ -12,12 +12,57 @@ export async function registerUser(data: any) {
             return { error: 'User already exists' };
         }
 
+        let schoolId = data.schoolId || '';
+        let schoolName = data.schoolName || '';
+
+        if (data.createNewSchool && data.newSchoolName && data.newSchoolEmail) {
+            const existingSchool = await User.findOne({ email: data.newSchoolEmail });
+            if (existingSchool) {
+                return { error: `School with email ${data.newSchoolEmail} already exists.` };
+            }
+
+            const schoolPassword = await bcrypt.hash('school123', 10);
+            const newSchool = await User.create({
+                id: `sch-${Date.now()}`,
+                name: data.newSchoolName,
+                email: data.newSchoolEmail,
+                password: schoolPassword,
+                role: 'school',
+                schoolName: data.newSchoolName,
+                schoolCode: `CODE-${Date.now().toString().slice(-6)}`,
+                principalName: 'Principal Name',
+                schoolType: 'private',
+                board: 'CBSE',
+                address: 'Address not provided',
+                city: 'City',
+                state: 'State',
+                pincode: '000000',
+                phone: '0000000000',
+                assignedCourses: [],
+                status: 'active',
+                subscriptionPlan: 'basic',
+                createdAt: new Date().toISOString()
+            });
+
+            schoolId = newSchool.id;
+            schoolName = newSchool.name;
+        } else if (schoolId === 'no_school') {
+            schoolId = ''; // Clear schoolId to store as undefined
+            schoolName = schoolName || 'Independent Learner';
+        } else if (schoolId && !schoolName) {
+            // Look up the school name from the ID
+            const school = await User.findOne({ id: schoolId, role: 'school' }).lean();
+            if (school) schoolName = (school as any).name;
+        }
+
         const hashedPassword = await bcrypt.hash(data.password, 10);
         const newUser = await User.create({
             ...data,
             id: `usr-${Date.now()}`,
             password: hashedPassword,
             role: data.role || 'student',
+            schoolId: schoolId || undefined,
+            schoolName: schoolName || undefined,
             createdAt: new Date().toISOString()
         });
 
@@ -28,6 +73,7 @@ export async function registerUser(data: any) {
         return { error: error.message || 'Registration failed' };
     }
 }
+
 
 export async function loginUser(email: string, pass: string): Promise<any | null> {
     await connectToDatabase();

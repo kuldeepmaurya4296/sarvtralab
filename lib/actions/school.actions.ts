@@ -20,6 +20,12 @@ export async function getAllSchools(): Promise<School[]> {
     return schools.map(clean) as School[];
 }
 
+export async function getPublicSchools() {
+    await connectToDatabase();
+    const schools = await User.find({ role: 'school' }, 'id name email').lean();
+    return schools.map(clean);
+}
+
 export async function getSchoolById(id: string): Promise<School | null> {
     await connectToDatabase();
     const school = await User.findOne({ id, role: 'school' }).lean();
@@ -40,10 +46,26 @@ export async function createSchool(data: Partial<School>): Promise<School | null
 
         const id = `sch-${Date.now()}`;
         const newSchool = await User.create({
+            // Minimal required for school registration from student form
+            name: data.name,
+            email: data.email,
+            password: data.password || 'school123',
+            schoolCode: data.schoolCode || `CODE-${Date.now().toString().slice(-6)}`,
+            principalName: data.principalName || 'Principal Name',
+            schoolType: data.schoolType || 'private',
+            board: data.board || 'CBSE',
+            address: data.address || 'Address not provided',
+            city: data.city || 'City',
+            state: data.state || 'State',
+            pincode: data.pincode || '000000',
+            phone: data.phone || '0000000000',
+            // Default platform fields
             ...data,
             id,
             role: 'school',
-            assignedCourses: [],
+            assignedCourses: data.assignedCourses || [],
+            status: 'active',
+            subscriptionPlan: data.subscriptionPlan || 'basic',
             createdAt: new Date().toISOString()
         });
 

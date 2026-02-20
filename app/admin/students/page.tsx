@@ -31,7 +31,7 @@ import { toast } from "sonner";
 
 // Actions
 import { getAllStudents, createStudent, updateStudent, deleteStudent } from '@/lib/actions/student.actions';
-import { getAllSchools } from '@/lib/actions/school.actions';
+import { getAllSchools, createSchool } from '@/lib/actions/school.actions';
 
 // Refactored Components
 import { StudentTable } from '@/components/admin/students/StudentTable';
@@ -161,9 +161,38 @@ export default function AdminStudentsPage() {
 
     const handleAddStudent = async (formData: any) => {
         try {
-            const schoolName = schools.find(s => s.id === formData.schoolId)?.name || 'Unknown School';
+            let schoolId = formData.schoolId;
+            let schoolName = '';
+
+            // 1. Handle New School Creation
+            if (schoolId === 'new_school') {
+                if (!formData.newSchoolName || !formData.newSchoolEmail) {
+                    toast.error("Please enter new school name and email");
+                    return;
+                }
+
+                toast.loading("Creating new school...");
+                const newSchool = await createSchool({
+                    name: formData.newSchoolName,
+                    email: formData.newSchoolEmail
+                });
+
+                if (newSchool) {
+                    schoolId = newSchool.id;
+                    schoolName = newSchool.name;
+                    setSchools(prev => [...prev, newSchool]);
+                    toast.success(`School "${schoolName}" created!`);
+                } else {
+                    throw new Error("Failed to create school");
+                }
+            } else {
+                schoolName = schools.find(s => s.id === schoolId)?.name || 'Unknown School';
+            }
+
+            // 2. Proceed with Student Creation
             const newStudent = await createStudent({
                 ...formData,
+                schoolId,
                 schoolName,
                 enrolledCourses: [],
                 role: 'student',
@@ -184,8 +213,8 @@ export default function AdminStudentsPage() {
                 toast.success("New student added successfully");
                 setIsAddOpen(false);
             }
-        } catch (error) {
-            toast.error("Failed to add student");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to add student");
         }
     };
 
