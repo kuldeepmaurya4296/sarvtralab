@@ -18,12 +18,21 @@ const scrubStudent = (doc: any) => {
 
 export async function getAllStudents() {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user.role !== 'superadmin' && session.user.role !== 'admin')) {
+    if (!session || (session.user.role !== 'superadmin' && session.user.role !== 'admin' && session.user.role !== 'school')) {
         throw new Error("Unauthorized");
     }
     await connectToDatabase();
     try {
-        const students = await User.find({ role: 'student' }).lean();
+        const query: any = { role: 'student' };
+
+        // If it's a school admin, only return students from their school
+        if (session.user.role === 'school') {
+            const user = session.user as any;
+            if (!user.schoolId) return [];
+            query.schoolId = user.schoolId;
+        }
+
+        const students = await User.find(query).lean();
         return students.map(scrubStudent);
     } catch (e) {
         console.error("Get All Students Error:", e);
