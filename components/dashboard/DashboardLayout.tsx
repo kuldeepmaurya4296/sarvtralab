@@ -178,8 +178,9 @@ const DashboardLayout = ({ children, role, userName, userEmail, hideSidebar = fa
         >
           {/* Logo */}
           <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 relative overflow-hidden flex items-center justify-center flex-shrink-0">
+            <Link href="/" className="flex items-center gap-2 group">
+              {/* Logo commented as per request */}
+              {/* <div className="w-8 h-8 relative overflow-hidden flex items-center justify-center flex-shrink-0">
                 <Image
                   src="/favicon.svg"
                   alt="Sarvtra Labs"
@@ -187,11 +188,14 @@ const DashboardLayout = ({ children, role, userName, userEmail, hideSidebar = fa
                   className="object-contain"
                   priority
                 />
-              </div>
-              {sidebarOpen && (
-                <span className="font-display text-lg font-bold">
-                  Sarvtra <span className="text-sidebar-primary">Labs</span>
+              </div> */}
+              {sidebarOpen ? (
+                <span className="text-xl font-black tracking-tighter transition-all duration-300 group-hover:scale-105">
+                  <span className="text-white">Sarvtra</span>
+                  <span className="text-sidebar-primary ml-1">Labs</span>
                 </span>
+              ) : (
+                <span className="text-xl font-black text-sidebar-primary group-hover:scale-110 transition-transform">S</span>
               )}
             </Link>
             <button
@@ -260,17 +264,19 @@ const DashboardLayout = ({ children, role, userName, userEmail, hideSidebar = fa
               className="lg:hidden fixed left-0 top-0 h-full w-72 bg-sidebar text-sidebar-foreground z-50"
             >
               <div className="h-16 flex items-center justify-between px-4 border-b border-sidebar-border">
-                <Link href="/" className="flex items-center gap-2">
-                  <div className="w-10 h-10 relative overflow-hidden flex items-center justify-center">
+                <Link href="/" className="flex items-center gap-2 group">
+                  {/* Logo commented as per request */}
+                  {/* <div className="w-10 h-10 relative overflow-hidden flex items-center justify-center">
                     <Image
                       src="/favicon.svg"
                       alt="Sarvtra Labs"
                       fill
                       className="object-contain"
                     />
-                  </div>
-                  <span className="font-display text-lg font-bold">
-                    Sarvtra <span className="text-sidebar-primary">Labs</span>
+                  </div> */}
+                  <span className="text-2xl font-black tracking-tighter">
+                    <span className="text-white">Sarvtra</span>
+                    <span className="text-sidebar-primary ml-1">Labs</span>
                   </span>
                 </Link>
                 <button

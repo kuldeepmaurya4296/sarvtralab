@@ -12,8 +12,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
           {/* Brand Column (4 cols) */}
           <div className="lg:col-span-4 space-y-6">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="h-10 w-10 relative overflow-hidden flex items-center justify-center">
+            <Link href="/" className="flex items-center gap-2 group">
+              {/* Logo commented as per request */}
+              {/* <div className="h-10 w-10 relative overflow-hidden flex items-center justify-center">
                 <Image
                   src="/favicon.svg"
                   alt="Sarvtra Labs Logo"
@@ -21,9 +22,10 @@ const Footer = () => {
                   height={40}
                   className="object-contain"
                 />
-              </div>
-              <span className="font-display text-2xl font-bold text-white">
-                Sarvtra <span className="text-primary">Labs</span>
+              </div> */}
+              <span className="font-display text-2xl font-bold transition-all duration-300 group-hover:scale-105">
+                <span className="text-white">Sarvtra</span>
+                <span className="text-primary ml-1">Labs</span>
               </span>
             </Link>
             <p className="text-zinc-400 leading-relaxed max-w-sm">

@@ -39,8 +39,9 @@ const Header = () => {
       </Link>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
-          <Link href="/" className="flex-center gap-2">
-            <div className="h-10 w-32 relative overflow-hidden flex items-center justify-center">
+          <Link href="/" className="flex items-center gap-2 group">
+            {/* Logo commented as per request */}
+            {/* <div className="h-10 w-32 relative overflow-hidden flex items-center justify-center">
               <Image
                 src="/favicon.svg"
                 alt="Sarvtra Labs (Sarwatra Labs) Logo"
@@ -48,7 +49,11 @@ const Header = () => {
                 className="object-contain"
                 priority
               />
-            </div>
+            </div> */}
+            <span className="text-2xl md:text-3xl font-black tracking-tighter transition-all duration-300 group-hover:scale-105">
+              <span className="bg-clip-text text-transparent bg-linear-to-r from-primary via-primary/80 to-accent animate-gradient">Sarvtra</span>
+              <span className="text-foreground ml-1">Labs</span>
+            </span>
           </Link>
 
           {/* Desktop Navigation */}
