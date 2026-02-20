@@ -11,6 +11,8 @@ import { useToast } from '@/hooks/use-toast';
 import { contactCards, organizationDetails } from '@/data/organization';
 import { useNotifications } from '@/context/NotificationContext';
 import * as Icons from 'lucide-react';
+import { sendContactEmail } from '@/lib/actions/mail.actions';
+import { Loader2 } from 'lucide-react';
 
 const IconComponent = ({ name, className }: { name: string; className?: string }) => {
     // @ts-ignore
@@ -28,27 +30,48 @@ export default function ContactContent() {
         message: ''
     });
     const [submitted, setSubmitted] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { notifyAdmin } = useNotifications();
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setTimeout(() => {
+        setIsSubmitting(true);
+
+        try {
+            const result = await sendContactEmail(formData);
+
+            if (result.success) {
+                toast({
+                    title: 'Message Sent!',
+                    description: 'Thank you for reaching out. We\'ll get back to you within 24 hours.',
+                });
+
+                notifyAdmin(
+                    'New Contact Inquiry',
+                    `Inquiry from ${formData.name} regarding: ${formData.subject}`,
+                    'info',
+                    '/admin/help-support'
+                );
+
+                setSubmitted(true);
+                setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+            } else {
+                toast({
+                    title: 'Error',
+                    description: result.error || 'Failed to send message. Please try again.',
+                    variant: 'destructive',
+                });
+            }
+        } catch (error) {
             toast({
-                title: 'Message Sent!',
-                description: 'Thank you for reaching out. We\'ll get back to you within 24 hours.',
+                title: 'Error',
+                description: 'An unexpected error occurred. Please try again later.',
+                variant: 'destructive',
             });
-
-            notifyAdmin(
-                'New Contact Inquiry',
-                `Inquiry from ${formData.name} regarding: ${formData.subject}`,
-                'info',
-                '/admin/help-support'
-            );
-
-            setSubmitted(true);
-            setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-        }, 1000);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -197,9 +220,18 @@ export default function ContactContent() {
                                         />
                                     </div>
 
-                                    <Button type="submit" size="lg" className="w-full">
-                                        <Send className="w-5 h-5 mr-2" />
-                                        Send Message
+                                    <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                                        {isSubmitting ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                                Sending...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Send className="w-5 h-5 mr-2" />
+                                                Send Message
+                                            </>
+                                        )}
                                     </Button>
                                 </form>
                             )}

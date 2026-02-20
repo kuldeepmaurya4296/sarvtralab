@@ -87,7 +87,7 @@ export default function AdminSettingsPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="support-email">Support Email</Label>
-                                        <Input id="support-email" defaultValue="support@sarvtralab.in" />
+                                        <Input id="support-email" defaultValue="connect@pushpako2.com" />
                                     </div>
                                 </div>
                                 <div className="flex justify-end pt-4">

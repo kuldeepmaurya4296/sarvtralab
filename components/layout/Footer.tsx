@@ -1,60 +1,64 @@
 import Link from 'next/link';
-import { GraduationCap, Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 import Image from 'next/image';
 import { footerLinks } from '@/data/content';
 import { organizationDetails } from '@/data/organization';
-import { SEO_KEYWORDS } from '@/lib/seo';
 
 const Footer = () => {
   return (
-    <footer className="bg-foreground text-background">
-      {/* Main Footer */}
-      <div className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
-          {/* Brand Column */}
-          <div className="lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="h-10 w-32 relative overflow-hidden flex items-center justify-center">
+    <footer className="bg-zinc-950 text-zinc-200 pt-20 pb-10 border-t border-zinc-800 font-sans">
+      <div className="container mx-auto px-4">
+        {/* Main Footer Content */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 mb-16">
+          {/* Brand Column (4 cols) */}
+          <div className="lg:col-span-4 space-y-6">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="h-10 w-10 relative overflow-hidden flex items-center justify-center">
                 <Image
                   src="/favicon.svg"
-                  alt="Sarvtra Labs (Sarwatra Labs) Logo"
-                  fill
+                  alt="Sarvtra Labs Logo"
+                  width={40}
+                  height={40}
                   className="object-contain"
                 />
               </div>
-              <span className="font-display text-xl font-bold">
+              <span className="font-display text-2xl font-bold text-white">
                 Sarvtra <span className="text-primary">Labs</span>
               </span>
             </Link>
-            <p className="text-background/70 text-sm mb-6">
+            <p className="text-zinc-400 leading-relaxed max-w-sm">
               India's leading CBSE-aligned robotics and coding education platform for K-12 students.
+              Empowering the next generation of innovators with hands-on learning.
             </p>
-            <div className="flex gap-3">
-              <a href="#" aria-label="Follow us on Facebook" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
-                <Facebook className="w-4 h-4" />
-              </a>
-              <a href="#" aria-label="Follow us on Twitter" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
-                <Twitter className="w-4 h-4" />
-              </a>
-              <a href="#" aria-label="Follow us on Instagram" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
-                <Instagram className="w-4 h-4" />
-              </a>
-              <a href="#" aria-label="Follow us on LinkedIn" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
-                <Linkedin className="w-4 h-4" />
-              </a>
-              <a href="#" aria-label="Subscribe to our Youtube channel" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-background/10 flex items-center justify-center hover:bg-primary transition-colors">
-                <Youtube className="w-4 h-4" />
-              </a>
+            <div className="flex gap-3 pt-2">
+              {[
+                { Icon: Facebook, label: "Facebook", href: organizationDetails.socials.find(s => s.platform === 'Facebook')?.url || '#' },
+                { Icon: Twitter, label: "Twitter", href: organizationDetails.socials.find(s => s.platform === 'Twitter')?.url || '#' },
+                { Icon: Instagram, label: "Instagram", href: organizationDetails.socials.find(s => s.platform === 'Instagram')?.url || '#' },
+                { Icon: Linkedin, label: "LinkedIn", href: organizationDetails.socials.find(s => s.platform === 'LinkedIn')?.url || '#' },
+                { Icon: Youtube, label: "YouTube", href: organizationDetails.socials.find(s => s.platform === 'YouTube')?.url || '#' },
+              ].map(({ Icon, label, href }, index) => (
+                <a
+                  key={index}
+                  href={href}
+                  aria-label={`Follow us on ${label}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300 text-zinc-400"
+                >
+                  <Icon className="w-5 h-5" />
+                </a>
+              ))}
             </div>
           </div>
 
-          {/* Courses */}
-          <div>
-            <h4 className="font-semibold text-lg mb-4">Courses</h4>
+          {/* Links Sections (8 cols total, 2 cols each) */}
+          <div className="lg:col-span-2">
+            <h4 className="font-bold text-white text-lg mb-6">Courses</h4>
             <ul className="space-y-3">
               {footerLinks.courses.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-background/70 hover:text-primary text-sm transition-colors">
+                  <Link href={link.href} className="text-zinc-400 hover:text-primary transition-colors text-sm">
                     {link.label}
                   </Link>
                 </li>
@@ -62,13 +66,12 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Company */}
-          <div>
-            <h4 className="font-semibold text-lg mb-4">Company</h4>
+          <div className="lg:col-span-2">
+            <h4 className="font-bold text-white text-lg mb-6">Company</h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-background/70 hover:text-primary text-sm transition-colors">
+                  <Link href={link.href} className="text-zinc-400 hover:text-primary transition-colors text-sm">
                     {link.label}
                   </Link>
                 </li>
@@ -76,13 +79,12 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Support */}
-          <div>
-            <h4 className="font-semibold text-lg mb-4">Support</h4>
+          <div className="lg:col-span-2">
+            <h4 className="font-bold text-white text-lg mb-6">Support</h4>
             <ul className="space-y-3">
               {footerLinks.support.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-background/70 hover:text-primary text-sm transition-colors">
+                  <Link href={link.href} className="text-zinc-400 hover:text-primary transition-colors text-sm">
                     {link.label}
                   </Link>
                 </li>
@@ -90,13 +92,12 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Dashboard Links */}
-          <div>
-            <h4 className="font-semibold text-lg mb-4">Dashboards</h4>
+          <div className="lg:col-span-2">
+            <h4 className="font-bold text-white text-lg mb-6">Dashboards</h4>
             <ul className="space-y-3">
               {footerLinks.dashboards.map((link) => (
                 <li key={link.href}>
-                  <Link href={link.href} className="text-background/70 hover:text-primary text-sm transition-colors">
+                  <Link href={link.href} className="text-zinc-400 hover:text-primary transition-colors text-sm">
                     {link.label}
                   </Link>
                 </li>
@@ -105,75 +106,63 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Contact Info */}
-        <div className="mt-12 pt-8 border-t border-background/10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                <Mail className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-background/50">Email Us</p>
-                <p className="font-medium text-sm">{organizationDetails.contact.email}</p>
-              </div>
+        {/* Contact Strip - Industry Style */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 py-8 border-y border-white/10 mb-8">
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-full bg-primary/10 text-primary shrink-0">
+              <Mail className="w-5 h-5" />
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                <Phone className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-background/50">Call Us</p>
-                <p className="font-medium text-sm">{organizationDetails.contact.phone}</p>
-              </div>
+            <div>
+              <h5 className="font-bold text-white mb-1">Email Us</h5>
+              <a href={`mailto:${organizationDetails.contact.email}`} className="text-zinc-400 hover:text-white transition-colors block">
+                {organizationDetails.contact.email}
+              </a>
+              <span className="text-xs text-zinc-500 mt-1 block">We reply within 24 hours</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                <MapPin className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-background/50">Visit Us</p>
-                <p className="font-medium text-sm">{organizationDetails.contact.address}</p>
-              </div>
+          </div>
+
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-full bg-primary/10 text-primary shrink-0">
+              <Phone className="w-5 h-5" />
+            </div>
+            <div>
+              <h5 className="font-bold text-white mb-1">Call Us</h5>
+              <a href={`tel:${organizationDetails.contact.phone.replace(/[^0-9+]/g, '')}`} className="text-zinc-400 hover:text-white transition-colors block">
+                {organizationDetails.contact.phone}
+              </a>
+              <span className="text-xs text-zinc-500 mt-1 block">{organizationDetails.contact.hours}</span>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-full bg-primary/10 text-primary shrink-0">
+              <MapPin className="w-5 h-5" />
+            </div>
+            <div>
+              <h5 className="font-bold text-white mb-1">Visit Sarvtra Labs</h5>
+              <p className="text-zinc-400 text-sm leading-relaxed max-w-xs">
+                {organizationDetails.contact.address}
+              </p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* SEO Keyword Cloud - Hidden on mobile for performance */}
-      <div className="border-t border-background/5 bg-background/2 hidden md:block">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-6xl mx-auto">
-            <h5 className="text-[10px] uppercase tracking-widest text-background/30 mb-4 font-bold">Recommended Topics & Areas We Serve</h5>
-            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-background/40">
-              {SEO_KEYWORDS.slice(0, 50).map((keyword, index, array) => (
-                <span key={index} className="hover:text-primary transition-colors cursor-default">
-                  {keyword}
-                  {index < array.length - 1 && <span className="ml-3 text-background/10">•</span>}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Bar */}
-      <div className="border-t border-background/10">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-background/60">
-              © 2025 Sarvtra Labs. All rights reserved.
-            </p>
-            <div className="flex items-center gap-6">
-              <Link href="/terms" className="text-sm text-background/60 hover:text-primary transition-colors">
-                Terms of Service
-              </Link>
-              <Link href="/privacy" className="text-sm text-background/60 hover:text-primary transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/refund" className="text-sm text-background/60 hover:text-primary transition-colors">
-                Refund Policy
-              </Link>
-            </div>
+        {/* Bottom Bar */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-zinc-500">
+          <p>© {new Date().getFullYear()} Sarvtra Labs. All rights reserved.</p>
+          <div className="flex flex-wrap justify-center gap-6 md:gap-8">
+            <Link href="/terms" className="hover:text-white transition-colors">
+              Terms of Service
+            </Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/refund" className="hover:text-white transition-colors">
+              Refund Policy
+            </Link>
+            <Link href="/site-map" className="hover:text-white transition-colors">
+              Sitemap
+            </Link>
           </div>
         </div>
       </div>

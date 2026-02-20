@@ -84,7 +84,7 @@ export default function CareersPage() {
                     <div className="mt-12 text-center bg-primary/5 rounded-2xl p-8">
                         <h3 className="text-xl font-bold mb-2">Don't see a fit?</h3>
                         <p className="text-muted-foreground mb-4">
-                            We are always looking for talented individuals. Send your resume to careers@sarvtralab.in
+                            We are always looking for talented individuals. Send your resume to connect@pushpako2.com
                         </p>
                         <Button variant="outline">Contact Us</Button>
                     </div>

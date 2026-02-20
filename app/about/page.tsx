@@ -5,7 +5,7 @@ import { constructMetadata } from '@/lib/seo';
 export const metadata = constructMetadata({
     title: 'About Us | Sarvtra Labs',
     description: 'Discover Sarvtra Labs (Sarwatra Labs), India\'s leading robotics education platform. We are committed to empowering students with next-gen STEM skills through hands-on learning.',
-    keywords: ['About Sarvtra Labs', 'Robotics Education India', 'STEM Platform', 'Edutech Noida', 'Sarwatra Labs'],
+    keywords: ['About Sarvtra Labs', 'Robotics Education India', 'STEM Platform', 'Edutech Bhopal', 'Sarwatra Labs'],
 });
 
 export default function AboutPage() {

@@ -20,11 +20,11 @@ export const organizationDetails = {
     tagline: 'Innovating Education for Future',
     description: 'Sarvtra Labs is India\'s premier robotics education platform, dedicated to making STEM education accessible, engaging, and aligned with global standards.',
     contact: {
-        email: 'hello@sarvtralab.in',
-        phone: '+91 1800 123 4567',
-        address: 'Sector 62, Noida, UP 201301',
+        email: 'connect@pushpako2.com',
+        phone: '+91-8085613350',
+        address: '1, Aadi Parishar, Bagsewaniya, Sant Ashram Nagar, Bhel Sangam Colony, Face2, Bhopal Madhya Pradesh',
         hours: 'Mon - Sat: 9:00 AM - 6:00 PM',
-        mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3502.0!2d77.37!3d28.62!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjjCsDM3JzEyLjAiTiA3N8KwMjInMTIuMCJF!5e0!3m2!1sen!2sin!4v1600000000000!5m2!1sen!2sin'
+        mapEmbedUrl: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3666.388836269417!2d77.46174487532353!3d23.22896577903158!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x397c43c4a6c4c4a1%3A0xc4c4c4c4c4c4c4c4!2sPushpak%20O2!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin'
     },
     socials: [
         { platform: 'Facebook', url: 'https://facebook.com', iconName: 'Facebook' },

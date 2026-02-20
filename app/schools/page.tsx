@@ -45,18 +45,18 @@ export default function SchoolsPage() {
                             training, and support. Join {organizationDetails.stats.find(s => s.label.includes('Partner'))?.value || '120+'} partner schools across India.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4">
-                            <Link href="/contact">
-                                <Button size="lg" className="w-full sm:w-auto h-12 text-lg font-semibold bg-primary hover:bg-primary/90">
+                            <Button size="lg" className="w-full sm:w-auto h-12 text-lg font-semibold bg-primary hover:bg-primary/90" asChild>
+                                <Link href="/contact">
                                     Request Demo
                                     <ArrowRight className="w-5 h-5 ml-2" />
-                                </Button>
-                            </Link>
-                            <a href={`tel:${organizationDetails.contact.phone.replace(/\s+/g, '')}`}>
-                                <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 text-lg text-white border-white/20 hover:bg-white/10">
+                                </Link>
+                            </Button>
+                            <Button size="lg" variant="outline" className="w-full sm:w-auto h-12 text-lg text-white border-white/20 cursor-pointer bg-white/10" asChild>
+                                <a href={`tel:${organizationDetails.contact.phone.replace(/\s+/g, '')}`}>
                                     <Phone className="w-5 h-5 mr-2" />
                                     {organizationDetails.contact.phone}
-                                </Button>
-                            </a>
+                                </a>
+                            </Button>
                         </div>
                     </motion.div>
                 </div>
@@ -154,14 +154,17 @@ export default function SchoolsPage() {
                                         </li>
                                     ))}
                                 </ul>
-                                <Link href="/contact" className="block">
+                                <div className="mt-auto">
                                     <Button
                                         className="w-full h-12 font-medium"
                                         variant={plan.popular ? 'default' : 'outline'}
+                                        asChild
                                     >
-                                        Get Started
+                                        <Link href="/contact">
+                                            Get Started
+                                        </Link>
                                     </Button>
-                                </Link>
+                                </div>
                             </motion.div>
                         ))}
                     </div>
@@ -177,12 +180,12 @@ export default function SchoolsPage() {
                     <p className="text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
                         Schedule a free demo to see how Sarvtra Labs can help your students excel in robotics and coding.
                     </p>
-                    <Link href="/contact">
-                        <Button size="lg" variant="secondary" className="text-lg font-semibold h-14 px-8">
+                    <Button size="lg" variant="secondary" className="text-lg font-semibold h-14 px-8" asChild>
+                        <Link href="/contact">
                             Schedule Free Demo
                             <ArrowRight className="w-5 h-5 ml-2" />
-                        </Button>
-                    </Link>
+                        </Link>
+                    </Button>
                 </div>
             </section>
         </PublicLayout>

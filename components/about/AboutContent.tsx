@@ -29,7 +29,7 @@ const values = [
 ];
 
 const milestones = [
-    { year: '2019', event: 'Sarvtra Labs founded in Noida' },
+    { year: '2019', event: 'Sarvtra Labs founded in Bhopal' },
     { year: '2020', event: 'First 10 school partnerships' },
     { year: '2021', event: 'Launched online learning platform' },
     { year: '2022', event: 'Expanded to 10 states' },

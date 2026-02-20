@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Phone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
+import { organizationDetails } from '@/data/organization';
 
 const CTASection = () => {
   return (
@@ -56,9 +57,9 @@ const CTASection = () => {
                 <ArrowRight className="w-5 h-5" />
               </button>
             </Link>
-            <a href="tel:+911800123456" className="inline-flex items-center gap-2 text-primary-foreground hover:underline">
+            <a href={`tel:${organizationDetails.contact.phone.replace(/[^0-9+]/g, '')}`} className="inline-flex items-center gap-2 text-primary-foreground hover:underline">
               <Phone className="w-5 h-5" />
-              <span className="font-medium">+91 1800 123 4567</span>
+              <span className="font-medium">{organizationDetails.contact.phone}</span>
             </a>
           </motion.div>
         </div>
