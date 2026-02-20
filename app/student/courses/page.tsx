@@ -100,7 +100,7 @@ export default function StudentCoursesPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {enrolledCourses.map((course: any, index: number) => (
                                 <motion.div
-                                    key={course.id}
+                                    key={course.id || `enrolled-${index}`}
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.1 }}
@@ -173,8 +173,8 @@ export default function StudentCoursesPage() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
-                                        {completedCourses.map((course: any) => (
-                                            <tr key={course.id} className="hover:bg-muted/5">
+                                        {completedCourses.map((course: any, index: number) => (
+                                            <tr key={course.id || `completed-${index}`} className="hover:bg-muted/5">
                                                 <td className="px-6 py-4 font-medium">{course.title}</td>
                                                 <td className="px-6 py-4 text-muted-foreground">{course.completionDate}</td>
                                                 <td className="px-6 py-4">
@@ -210,8 +210,8 @@ export default function StudentCoursesPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {recommendedCourses.map(course => (
-                            <Link key={course.id} href={`/courses/${course.id}`}>
+                        {recommendedCourses.map((course, index) => (
+                            <Link key={course.id || `recommended-${index}`} href={`/courses/${course.id}`}>
                                 <div className="bg-card border rounded-xl p-4 flex gap-4 hover:shadow-sm transition-shadow h-full cursor-pointer">
                                     <div className="w-16 h-16 bg-muted rounded-lg flex-shrink-0 bg-cover bg-center" style={{ backgroundImage: `url(${course.image})` }} />
                                     <div className="flex flex-col justify-between">
