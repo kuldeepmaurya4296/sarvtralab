@@ -13,7 +13,7 @@ import {
     Database
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSuperAdmin } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -23,7 +23,12 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 
 export default function AdminSettingsPage() {
-    const admin = mockSuperAdmin;
+    const { user, isLoading: authLoading } = useAuth();
+
+    if (authLoading) return <div className="min-h-screen flex items-center justify-center">Loading Settings...</div>;
+    if (!user || user.role !== 'superadmin') return null;
+
+    const admin = user;
 
     return (
         <DashboardLayout role="admin" userName={admin.name} userEmail={admin.email}>

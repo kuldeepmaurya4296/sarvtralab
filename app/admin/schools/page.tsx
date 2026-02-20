@@ -138,9 +138,9 @@ export default function AdminSchoolsPage() {
                 setIsAddOpen(false);
                 toast.success("School created successfully");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to create school", error);
-            toast.error("Failed to create school");
+            toast.error(error.message || "Failed to create school");
         }
     };
 
@@ -153,9 +153,9 @@ export default function AdminSchoolsPage() {
                 setIsEditOpen(false);
                 toast.success("School details updated");
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to update school", error);
-            toast.error("Failed to update school");
+            toast.error(error.message || "Failed to update school");
         }
     };
 
@@ -184,8 +184,8 @@ export default function AdminSchoolsPage() {
                 setIsAccessOpen(false);
                 toast.success("Access settings updated");
             }
-        } catch (error) {
-            toast.error("Failed to update access settings");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to update access settings");
         }
     };
 

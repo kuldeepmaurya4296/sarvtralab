@@ -88,9 +88,15 @@ export default function CheckoutPage() {
 
         try {
             const totalAmount = itemDetails.price * 1.18;
+            const paymentNotes = {
+                userId: user.id,
+                itemId: id,
+                itemType: type,
+                amount: totalAmount
+            };
 
             // 1. Create Order
-            const order = await createRazorpayOrder(totalAmount, 'INR', 'receipt_' + Date.now());
+            const order = await createRazorpayOrder(totalAmount, 'INR', 'receipt_' + Date.now(), paymentNotes);
 
             if (!order || !order.id) {
                 throw new Error("Failed to create order");
@@ -149,7 +155,8 @@ export default function CheckoutPage() {
                     contact: '', // potentialUser.phone
                 },
                 notes: {
-                    address: "Sarvtra Labs Corporate Office"
+                    address: "Sarvtra Labs Corporate Office",
+                    ...paymentNotes
                 },
                 theme: {
                     color: "#3399cc"

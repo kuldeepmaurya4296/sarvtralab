@@ -18,7 +18,7 @@ import { Student } from '@/data/users';
 export default function CoursePlayerPage() {
     const params = useParams();
     const router = useRouter();
-    const courseId = params.courseId as string;
+    const courseId = params.id as string;
     const { user, isLoading: isAuthLoading } = useAuth();
 
     const [course, setCourse] = useState<Course | null>(null);

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import { ChartCard, AreaChartComponent } from '@/components/dashboard/Charts';
+import { getTeacherDashboardStats } from '@/lib/actions/dashboard.actions';
 import { motion } from 'framer-motion';
 import {
     BookOpen,
@@ -26,43 +27,52 @@ export default function TeacherDashboardPage() {
     const { user, isLoading: authLoading } = useAuth();
     const router = useRouter();
 
+    const [stats, setStats] = useState<any>(null);
+    const [isLoadingStats, setIsLoadingStats] = useState(true);
+
     useEffect(() => {
         if (!authLoading && (!user || user.role !== 'teacher')) {
             router.push('/login');
         }
+
+        const fetchStats = async () => {
+            if (user?.id) {
+                const data = await getTeacherDashboardStats(user.id);
+                setStats(data);
+                setIsLoadingStats(false);
+            }
+        };
+
+        if (user) {
+            fetchStats();
+        }
     }, [user, authLoading, router]);
 
-    if (authLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (authLoading || isLoadingStats) return <div className="min-h-screen flex items-center justify-center">Loading Dashboard...</div>;
     if (!user || user.role !== 'teacher') return null;
 
-    const stats = [
-        { title: 'Assigned Courses', value: '4', icon: BookOpen, change: '+1', changeType: 'positive' as const },
-        { title: 'Total Students', value: '128', icon: Users, change: '+12%', changeType: 'positive' as const },
-        { title: 'Materials Uploaded', value: '36', icon: FileText, change: '+5', changeType: 'positive' as const },
-        { title: 'Avg. Completion', value: '72%', icon: TrendingUp, change: '+8%', changeType: 'positive' as const },
+    const statCards = [
+        { title: 'Assigned Courses', value: stats?.totalCourses || '0', icon: BookOpen, change: '+0', changeType: 'positive' as const },
+        { title: 'Total Students', value: stats?.totalStudents || '0', icon: Users, change: '+0', changeType: 'positive' as const },
+        { title: 'Materials Uploaded', value: '36', icon: FileText, change: '+0', changeType: 'positive' as const },
+        { title: 'Avg. Completion', value: `${stats?.avgCompletion || 0}%`, icon: TrendingUp, change: '+0', changeType: 'positive' as const },
     ];
 
-    const recentCourses = [
-        { id: 'c1', title: 'Robotics Fundamentals', students: 42, progress: 68, nextClass: '2026-02-20T10:00' },
-        { id: 'c2', title: 'Python for Beginners', students: 35, progress: 45, nextClass: '2026-02-20T14:00' },
-        { id: 'c3', title: 'Arduino Workshop', students: 28, progress: 82, nextClass: '2026-02-21T10:00' },
-        { id: 'c4', title: 'Advanced Coding Lab', students: 23, progress: 30, nextClass: '2026-02-21T15:00' },
-    ];
-
+    const recentCourses = stats?.recentCourses || [];
     const upcomingClasses = [
         { time: '10:00 AM', course: 'Robotics Fundamentals', type: 'Live', grade: 'Grade 8' },
         { time: '02:00 PM', course: 'Python for Beginners', type: 'Recorded', grade: 'Grade 9' },
         { time: '04:00 PM', course: 'Arduino Workshop', type: 'Lab', grade: 'Grade 10' },
     ];
 
-    const studentEngagement = [
-        { name: 'Mon', engagement: 78 },
-        { name: 'Tue', engagement: 85 },
-        { name: 'Wed', engagement: 72 },
-        { name: 'Thu', engagement: 90 },
-        { name: 'Fri', engagement: 88 },
-        { name: 'Sat', engagement: 45 },
-        { name: 'Sun', engagement: 30 },
+    const studentEngagement = stats?.trendData?.length > 0 ? stats.trendData : [
+        { name: 'Mon', students: 0 },
+        { name: 'Tue', students: 0 },
+        { name: 'Wed', students: 0 },
+        { name: 'Thu', students: 0 },
+        { name: 'Fri', students: 0 },
+        { name: 'Sat', students: 0 },
+        { name: 'Sun', students: 0 },
     ];
 
     return (
@@ -75,7 +85,7 @@ export default function TeacherDashboardPage() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {stats.map((stat, idx) => (
+                    {statCards.map((stat: any, idx: number) => (
                         <motion.div
                             key={stat.title}
                             initial={{ opacity: 0, y: 20 }}
@@ -102,7 +112,7 @@ export default function TeacherDashboardPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-4">
-                                {recentCourses.map((course) => (
+                                {recentCourses.map((course: any) => (
                                     <div key={course.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                                         <div className="flex items-center gap-3 flex-1">
                                             <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
@@ -132,7 +142,7 @@ export default function TeacherDashboardPage() {
                         <ChartCard title="Student Engagement This Week">
                             <AreaChartComponent
                                 data={studentEngagement}
-                                dataKey="engagement"
+                                dataKey="students"
                                 xAxisKey="name"
                                 color="#6366f1"
                             />

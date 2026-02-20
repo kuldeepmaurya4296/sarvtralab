@@ -35,10 +35,12 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 return {
-                    id: user.id || user._id.toString(),
+                    id: user.id, // Custom ID (usr-...)
+                    dbId: user._id.toString(), // Database ObjectId
                     name: user.name,
                     email: user.email,
                     role: user.role,
+                    schoolId: user.schoolId?.toString(),
                     enrolledCourses: user.enrolledCourses
                 };
             },
@@ -49,6 +51,8 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.role = user.role;
                 token.id = user.id;
+                token.dbId = (user as any).dbId;
+                token.schoolId = (user as any).schoolId;
                 token.enrolledCourses = (user as any).enrolledCourses;
             }
             if (trigger === "update" && session?.user) {
@@ -64,6 +68,8 @@ export const authOptions: NextAuthOptions = {
             if (session.user) {
                 session.user.role = token.role as string;
                 session.user.id = token.id as string;
+                (session.user as any).dbId = token.dbId;
+                (session.user as any).schoolId = token.schoolId;
                 (session.user as any).enrolledCourses = token.enrolledCourses;
             }
             return session;

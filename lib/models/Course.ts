@@ -31,13 +31,14 @@ const CourseSchema = new Schema({
     emiAmount: Number,
     emiMonths: Number,
     image: String,
-    category: { type: String, enum: ['foundation', 'intermediate', 'advanced'] },
+    category: { type: String, enum: ['foundation', 'intermediate', 'advanced'], index: true },
     tags: [String],
     features: [String],
     curriculum: [CurriculumModuleSchema],
     rating: Number,
-    studentsEnrolled: Number,
-    instructor: String,
+    studentsEnrolled: { type: Number, default: 0 },
+    instructor: { type: Schema.Types.ObjectId, ref: 'User', index: true },
+    schoolId: { type: Schema.Types.ObjectId, ref: 'School', index: true },
     level: { type: String, enum: ['Beginner', 'Intermediate', 'Advanced'] }
 }, {
     timestamps: true

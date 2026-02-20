@@ -8,3 +8,8 @@ export function cn(...inputs: ClassValue[]) {
 export function formatNumber(num: number): string {
   return new Intl.NumberFormat('en-IN').format(num);
 }
+
+export function clean(doc: any) {
+  if (!doc) return null;
+  return JSON.parse(JSON.stringify(doc));
+}

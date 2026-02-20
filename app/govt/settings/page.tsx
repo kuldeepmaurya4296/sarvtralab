@@ -9,8 +9,7 @@ import {
     Shield,
     Save
 } from 'lucide-react';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockGovtOrgs } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,12 +25,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
 
 export default function GovtSettingsPage() {
-    const govtOrg = mockGovtOrgs[0];
+    const { user } = useAuth();
+
+    if (!user) return null;
 
     return (
-        <DashboardLayout role="govt" userName={govtOrg.name} userEmail={govtOrg.email}>
+        <DashboardLayout role="govt" userName={user.name} userEmail={user.email}>
             <div className="space-y-6">
                 <div>
                     <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
@@ -63,23 +65,23 @@ export default function GovtSettingsPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="name">Full Name</Label>
-                                        <Input id="name" defaultValue={govtOrg.name} />
+                                        <Input id="name" defaultValue={user.name} />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="email">Email Address</Label>
-                                        <Input id="email" defaultValue={govtOrg.email} disabled />
+                                        <Input id="email" defaultValue={user.email} disabled />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="designation">Designation</Label>
-                                        <Input id="designation" defaultValue={govtOrg.designation} />
+                                        <Input id="designation" defaultValue={(user as any).designation} />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="department">Department</Label>
-                                        <Input id="department" defaultValue={govtOrg.department} />
+                                        <Input id="department" defaultValue={(user as any).department} />
                                     </div>
                                     <div className="space-y-2 col-span-2">
                                         <Label htmlFor="orgName">Organization Name</Label>
-                                        <Input id="orgName" defaultValue={govtOrg.organizationName} />
+                                        <Input id="orgName" defaultValue={(user as any).organizationName} />
                                     </div>
                                 </div>
                                 <div className="flex justify-end pt-4">

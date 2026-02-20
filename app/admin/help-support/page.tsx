@@ -22,7 +22,9 @@ import {
     Eye
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSuperAdmin, mockHelpSupport, mockSupportTickets, mockStudents } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
+import { getAllTickets, getSupportStaff, updateTicketStatus } from '@/lib/actions/support.actions';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -72,12 +74,29 @@ import {
 import { Separator } from '@/components/ui/separator';
 
 export default function AdminHelpSupportPage() {
-    const admin = mockSuperAdmin;
+    const { user: admin, isLoading: authLoading } = useAuth();
+    const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
     // State
-    const [staffList, setStaffList] = useState(mockHelpSupport);
-    const [tickets, setTickets] = useState(mockSupportTickets);
+    const [staffList, setStaffList] = useState<any[]>([]);
+    const [tickets, setTickets] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const [ticketsData, staffData] = await Promise.all([
+                getAllTickets(),
+                getSupportStaff()
+            ]);
+            setTickets(ticketsData);
+            setStaffList(staffData);
+            setIsLoading(false);
+        };
+        fetchData();
+    }, []);
+
+    if (authLoading || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading Help & Support...</div>;
+    if (!admin || admin.role !== 'superadmin') return null;
 
     // Actions
     const [selectedStaff, setSelectedStaff] = useState<any>(null);
@@ -102,9 +121,9 @@ export default function AdminHelpSupportPage() {
 
 
     const filteredTickets = tickets.filter(ticket =>
-        ticket.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        ticket.studentName.toLowerCase().includes(searchQuery.toLowerCase())
+        (ticket.subject?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (ticket.description?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (ticket.user?.name?.toLowerCase() || '').includes(searchQuery.toLowerCase())
     );
 
     const filteredStaff = staffList.filter(staff =>
@@ -159,13 +178,18 @@ export default function AdminHelpSupportPage() {
         toast.success("Agent removed");
     };
 
-    const handleUpdateTicket = () => {
+    const handleUpdateTicket = async () => {
         if (!selectedTicket) return;
-        setTickets(tickets.map(t =>
-            t.id === selectedTicket.id ? { ...t, status: ticketStatus as 'open' | 'in-progress' | 'resolved' | 'closed' } : t
-        ));
-        setIsViewTicketOpen(false);
-        toast.success("Ticket status updated");
+        const res = await updateTicketStatus(selectedTicket.ticketId, ticketStatus);
+        if (res) {
+            setTickets(tickets.map(t =>
+                t.ticketId === selectedTicket.ticketId ? { ...t, status: ticketStatus } : t
+            ));
+            setIsViewTicketOpen(false);
+            toast.success("Ticket status updated");
+        } else {
+            toast.error("Failed to update ticket status");
+        }
     }
 
     const openEditStaff = (staff: any) => {
@@ -273,7 +297,7 @@ export default function AdminHelpSupportPage() {
                                                                 <span className="text-xs text-muted-foreground truncate max-w-[200px]">{ticket.description}</span>
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell>{ticket.studentName}</TableCell>
+                                                        <TableCell>{ticket.user?.name || 'Unknown'}</TableCell>
                                                         <TableCell>
                                                             <Badge variant={ticket.priority === 'high' ? 'destructive' : ticket.priority === 'medium' ? 'secondary' : 'outline'}>
                                                                 {ticket.priority}
@@ -402,8 +426,8 @@ export default function AdminHelpSupportPage() {
                                                                 {staff.status}
                                                             </Badge>
                                                         </TableCell>
-                                                        <TableCell className="font-medium">{staff.ticketsResolved}</TableCell>
-                                                        <TableCell>{staff.ticketsPending}</TableCell>
+                                                        <TableCell className="font-medium">{staff.ticketsResolved || 0}</TableCell>
+                                                        <TableCell>{staff.ticketsPending || 0}</TableCell>
                                                         <TableCell className="text-right">
                                                             <DropdownMenu>
                                                                 <DropdownMenuTrigger asChild>
@@ -596,9 +620,8 @@ export default function AdminHelpSupportPage() {
 
                             <Separator />
 
-                            {/* Student Profile Section */}
                             {(() => {
-                                const student = mockStudents.find(s => s.id === selectedTicket.studentId);
+                                const student = selectedTicket.user;
                                 if (student) {
                                     return (
                                         <div className="space-y-3">
@@ -653,10 +676,10 @@ export default function AdminHelpSupportPage() {
                                     <Select value={ticketStatus} onValueChange={setTicketStatus}>
                                         <SelectTrigger className="bg-background"><SelectValue /></SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="open">Open</SelectItem>
-                                            <SelectItem value="in-progress">In Progress</SelectItem>
-                                            <SelectItem value="resolved">Resolved</SelectItem>
-                                            <SelectItem value="closed">Closed</SelectItem>
+                                            <SelectItem value="Open">Open</SelectItem>
+                                            <SelectItem value="In Progress">In Progress</SelectItem>
+                                            <SelectItem value="Resolved">Resolved</SelectItem>
+                                            <SelectItem value="Closed">Closed</SelectItem>
                                         </SelectContent>
                                     </Select>
                                     <Button onClick={handleUpdateTicket}>Update</Button>

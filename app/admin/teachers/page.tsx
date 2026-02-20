@@ -95,8 +95,8 @@ export default function AdminTeachersPage() {
                 toast.success("Teacher added successfully");
                 setIsAddOpen(false);
             }
-        } catch (error) {
-            toast.error("Failed to add teacher");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to add teacher");
         }
     };
 
@@ -109,8 +109,8 @@ export default function AdminTeachersPage() {
                 toast.success("Teacher details updated");
                 setIsEditOpen(false);
             }
-        } catch (error) {
-            toast.error("Failed to update teacher");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to update teacher");
         }
     };
 
@@ -140,8 +140,8 @@ export default function AdminTeachersPage() {
                 );
                 toast.success("School assignments updated");
             }
-        } catch (error) {
-            toast.error("Failed to assign schools");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to assign schools");
         }
     };
 

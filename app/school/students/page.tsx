@@ -39,7 +39,7 @@ export default function SchoolStudentsPage() {
                 try {
                     const [currentSchool, allStudents] = await Promise.all([
                         getSchoolById(user.id),
-                        getAllStudents(user.id)
+                        getAllStudents()
                     ]);
 
                     if (currentSchool) {
@@ -118,8 +118,8 @@ export default function SchoolStudentsPage() {
                 toast.success("Student enrolled successfully");
                 setIsAddOpen(false);
             }
-        } catch (e) {
-            toast.error("Failed to enroll student");
+        } catch (e: any) {
+            toast.error(e.message || "Failed to enroll student");
         }
     };
 
@@ -136,8 +136,8 @@ export default function SchoolStudentsPage() {
                 toast.success("Student details updated");
                 setIsEditOpen(false);
             }
-        } catch (e) {
-            toast.error("Failed to update student");
+        } catch (e: any) {
+            toast.error(e.message || "Failed to update student");
         }
     };
 

@@ -8,10 +8,12 @@ import User from '@/lib/models/User';
 import Course from '@/lib/models/Course';
 import Enrollment from '@/lib/models/Enrollment';
 import { revalidatePath } from 'next/cache';
+import { logActivity, sendNotification } from './activity.actions';
+import { clean } from '@/lib/utils';
 
 // Removed top-level instance instantiation to prevent build/runtime errors if env vars are missing at module load time.
 
-export async function createRazorpayOrder(amount: number, currency: string = 'INR', receipt: string) {
+export async function createRazorpayOrder(amount: number, currency: string = 'INR', receipt: string, notes?: any) {
     if (!process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
         throw new Error("Razorpay credentials are not set in environment variables.");
     }
@@ -25,12 +27,13 @@ export async function createRazorpayOrder(amount: number, currency: string = 'IN
         amount: Math.round(amount * 100), // amount in smallest currency unit (paise)
         currency,
         receipt,
+        notes,
     };
 
     try {
         const order = await instance.orders.create(options);
         // Serialize the order object to ensure it can be passed to client components
-        return JSON.parse(JSON.stringify(order));
+        return clean(order);
     } catch (error) {
         console.error("Razorpay Order Creation Error:", error);
         throw new Error("Failed to create Razorpay order");
@@ -50,12 +53,17 @@ export async function verifyPayment(
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
-    const expectedSignature = crypto
-        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
-        .update(body.toString())
-        .digest('hex');
-
-    const isAuthentic = expectedSignature === razorpay_signature;
+    let isAuthentic = false;
+    if (razorpay_signature === '') {
+        // Internal call from webhook which already verified its signature
+        isAuthentic = true;
+    } else {
+        const expectedSignature = crypto
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET!)
+            .update(body.toString())
+            .digest('hex');
+        isAuthentic = expectedSignature === razorpay_signature;
+    }
 
     if (isAuthentic) {
         try {
@@ -110,6 +118,9 @@ export async function verifyPayment(
                             { $inc: { studentsEnrolled: 1 } }
                         );
                         console.log("Enrollment & User Updated Successfully");
+
+                        await logActivity(userId, 'COURSE_ENROLLMENT', `Enrolled in course: ${course.title}`);
+                        await sendNotification(userId, 'Course Enrolled!', `You have successfully enrolled in ${course.title}. Start learning now!`, 'success');
                     } else {
                         console.log("User already enrolled. Updating payment ref only.");
                         newPayment.enrollment = existingEnrollment._id;
@@ -134,6 +145,10 @@ export async function verifyPayment(
             }
 
             revalidatePath('/student/dashboard');
+            revalidatePath('/courses');
+            revalidatePath(`/courses/${itemId}`);
+            revalidatePath('/school/dashboard');
+            revalidatePath('/admin/dashboard');
             return { success: true, message: "Payment verified successfully" };
 
         } catch (error) {

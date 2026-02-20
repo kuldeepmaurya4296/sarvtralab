@@ -1,7 +1,7 @@
 'use client';
 
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockStudents } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
 import { organizationDetails } from '@/data/organization';
 import { Mail, Phone, Clock, Construction, LifeBuoy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,10 +9,11 @@ import { useNotifications } from '@/context/NotificationContext';
 import { toast } from 'sonner';
 
 export default function StudentSupportPage() {
-    const student = mockStudents.find(s => s.id === 'std-001');
+    const { user, isLoading: authLoading } = useAuth();
     const { notifyAdmin, addNotification } = useNotifications();
 
-    if (!student) return <div>Loading...</div>;
+    if (authLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (!user) return null;
 
     const handleCreateTicket = () => {
         toast.success("Support ticket created!");
@@ -23,14 +24,14 @@ export default function StudentSupportPage() {
         );
         notifyAdmin(
             'New Support Ticket',
-            `${student.name} has submitted a new support ticket.`,
+            `${user.name} has submitted a new support ticket.`,
             'warning',
             '/admin/help-support'
         );
     };
 
     return (
-        <DashboardLayout role="student" userName={student.name} userEmail={student.email}>
+        <DashboardLayout role="student" userName={user.name || ''} userEmail={user.email || ''}>
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>

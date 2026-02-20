@@ -84,8 +84,8 @@ export default function AdminGovtOrgsPage() {
                 toast.success("Organization added successfully");
                 setIsAddOpen(false);
             }
-        } catch (error) {
-            toast.error("Failed to create organization");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to create organization");
         }
     };
 
@@ -102,8 +102,8 @@ export default function AdminGovtOrgsPage() {
                 toast.success("Organization details updated");
                 setIsEditOpen(false);
             }
-        } catch (error) {
-            toast.error("Failed to update organization");
+        } catch (error: any) {
+            toast.error(error.message || "Failed to update organization");
         }
     };
 

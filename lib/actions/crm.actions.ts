@@ -3,6 +3,7 @@
 import connectToDatabase from '@/lib/mongoose';
 import Lead from '@/lib/models/Lead';
 import { revalidatePath } from 'next/cache';
+import { clean } from '@/lib/utils';
 
 /**
  * Fetch leads with filtering, sorting, and pagination
@@ -42,7 +43,7 @@ export async function getLeads(
         const total = await Lead.countDocuments(query);
 
         return {
-            leads: JSON.parse(JSON.stringify(leads)),
+            leads: clean(leads),
             total,
             totalPages: Math.ceil(total / limit)
         };
@@ -67,7 +68,7 @@ export async function createLead(data: any) {
 
         const newLead = await Lead.create(data);
         revalidatePath('/admin/crm');
-        return JSON.parse(JSON.stringify(newLead));
+        return clean(newLead);
     } catch (error: any) {
         console.error("Error creating lead:", error);
         throw new Error(error.message || "Failed to create lead");
@@ -90,7 +91,7 @@ export async function updateLeadStatus(id: string, status: string) {
         if (!lead) throw new Error("Lead not found");
 
         revalidatePath('/admin/crm');
-        return JSON.parse(JSON.stringify(lead));
+        return clean(lead);
     } catch (error) {
         console.error("Error updating lead status:", error);
         throw new Error("Failed to update lead status");

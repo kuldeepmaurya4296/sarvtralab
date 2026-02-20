@@ -1,31 +1,48 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FileBarChart, Search, Plus } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSchools } from '@/data/users';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useAuth } from '@/context/AuthContext';
 
 import { SchoolReportTable } from '@/components/school/reports/SchoolReportTable';
 import { SchoolReportViewSheet } from '@/components/school/reports/SchoolReportViewSheet';
 import { SchoolReportGenerateSheet } from '@/components/school/reports/SchoolReportGenerateSheet';
 
-
-import { ReportService } from '@/data/services/report.service';
-import { SchoolService } from '@/data/services/school.service';
+import { getReportsBySchool, createReport } from '@/lib/actions/report.actions';
 
 export default function SchoolReportsPage() {
-    const school = SchoolService.getAll()[0];
-    const [reports, setReports] = useState(ReportService.getBySchool(school.id));
+    const { user } = useAuth();
+    const [reports, setReports] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [typeFilter, setTypeFilter] = useState('all');
     const [selectedReport, setSelectedReport] = useState<any>(null);
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [isGenerateOpen, setIsGenerateOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (user?.id) {
+            loadReports();
+        }
+    }, [user]);
+
+    async function loadReports() {
+        if (!user) return;
+        try {
+            const data = await getReportsBySchool(user.id);
+            setReports(data || []);
+        } catch (error) {
+            toast.error("Failed to load reports");
+        } finally {
+            setLoading(false);
+        }
+    }
 
     const filteredReports = reports.filter(report => {
         const matchesSearch = report.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -33,34 +50,32 @@ export default function SchoolReportsPage() {
         return matchesSearch && matchesType;
     });
 
-    const handleGenerateReport = (data: { type: string; period: string; format: string }) => {
-        const newReport = ReportService.generate({
-            name: `${data.type} Report - ${data.period}`,
-            type: data.type || 'Custom',
-            generatedBy: school.name,
-            schoolId: school.id,
-            description: `Generated report for ${data.period} in ${data.format} format.`
-        });
+    const handleGenerateReport = async (data: { type: string; period: string; format: string }) => {
+        if (!user) return;
+        try {
+            const newReport = await createReport({
+                name: `${data.type} Report - ${data.period}`,
+                type: data.type || 'Custom',
+                generatedBy: user.name,
+                schoolId: user.id,
+                description: `Generated report for ${data.period} in ${data.format} format.`
+            });
 
-        if (newReport) {
-            setReports([newReport, ...reports]);
-            toast.info("Report generation started. It will be available shortly.");
-
-            // Database simulation: complete the processing after 3s
-            setTimeout(() => {
-                const updated = ReportService.update(newReport.id, { status: 'Ready', size: '1.5 MB' });
-                if (updated) {
-                    setReports(prev => prev.map(r => r.id === newReport.id ? updated : r));
-                    toast.success("Report generated successfully!");
-                }
-            }, 3000);
+            if (newReport) {
+                setReports([newReport, ...reports]);
+                toast.success("Report generated successfully!");
+            }
+        } catch (error) {
+            toast.error("Failed to generate report");
         }
     };
 
     const openReportView = (report: any) => { setSelectedReport(report); setIsViewOpen(true); };
 
+    if (!user) return null;
+
     return (
-        <DashboardLayout role="school" userName={school.name} userEmail={school.email}>
+        <DashboardLayout role="school" userName={user.name} userEmail={user.email}>
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>

@@ -12,11 +12,35 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import Image from 'next/image';
 import { Course, CurriculumModule, Lesson } from '@/data/courses';
 
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { checkEnrollmentStatus } from '@/lib/actions/student.actions';
+import { toast } from 'sonner';
+
 interface CourseDetailContentProps {
     course: Course;
 }
 
 export default function CourseDetailContent({ course }: CourseDetailContentProps) {
+    const { user } = useAuth();
+    const [isEnrolled, setIsEnrolled] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
+
+    useEffect(() => {
+        const checkStatus = async () => {
+            if (user && user.role === 'student') {
+                try {
+                    const status = await checkEnrollmentStatus(user.id, course.id);
+                    setIsEnrolled(status);
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            setIsChecking(false);
+        };
+        checkStatus();
+    }, [user, course.id]);
+
     return (
         <PublicLayout>
             {/* Breadcrumb */}
@@ -60,25 +84,25 @@ export default function CourseDetailContent({ course }: CourseDetailContentProps
                             <div className="flex flex-wrap items-center gap-4 mb-6">
                                 <div className="flex items-center gap-2">
                                     <Star className="w-5 h-5 fill-orange-400 text-orange-400" />
-                                    <span className="font-semibold">{course.rating}</span>
-                                    <span className="text-muted-foreground">({course.studentsEnrolled.toLocaleString()} students)</span>
+                                    <span className="font-semibold">{course.rating || 4.5}</span>
+                                    <span className="text-muted-foreground">({(course.studentsEnrolled || 0).toLocaleString()} students)</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Clock className="w-5 h-5" />
-                                    <span>{course.totalHours} hours</span>
+                                    <span>{course.totalHours || course.sessions || 0} hours</span>
                                 </div>
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Calendar className="w-5 h-5" />
-                                    <span>{course.duration}</span>
+                                    <span>{course.duration || '3 Months'}</span>
                                 </div>
                             </div>
 
                             <p className="text-sm text-muted-foreground mb-6">
-                                Instructor: <span className="font-semibold text-foreground">{course.instructor}</span>
+                                Instructor: <span className="font-semibold text-foreground">{typeof course.instructor === 'string' ? course.instructor : 'Sarvtra Expert'}</span>
                             </p>
 
                             <div className="flex flex-wrap gap-2 mb-8">
-                                {course.tags.map((tag: string) => (
+                                {(course.tags || []).map((tag: string) => (
                                     <span key={tag} className="px-3 py-1 bg-white border rounded-full text-sm font-medium">
                                         {tag}
                                     </span>
@@ -95,7 +119,7 @@ export default function CourseDetailContent({ course }: CourseDetailContentProps
                             <div className="bg-white rounded-2xl shadow-xl border p-6 sticky top-24">
                                 <div className="aspect-video bg-muted rounded-xl mb-6 overflow-hidden relative">
                                     <Image
-                                        src="/robotics-illustration.jpg"
+                                        src={course.image || "/robotics-illustration.jpg"}
                                         alt={course.title}
                                         fill
                                         className="object-cover"
@@ -104,14 +128,18 @@ export default function CourseDetailContent({ course }: CourseDetailContentProps
 
                                 <div className="flex items-baseline gap-3 mb-4">
                                     <span className="text-4xl font-bold text-foreground">
-                                        ₹{course.price.toLocaleString()}
+                                        ₹{(course.price || 0).toLocaleString()}
                                     </span>
-                                    <span className="text-xl text-muted-foreground line-through">
-                                        ₹{course.originalPrice.toLocaleString()}
-                                    </span>
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 ml-2">
-                                        {Math.round((1 - course.price / course.originalPrice) * 100)}% OFF
-                                    </span>
+                                    {course.originalPrice && (
+                                        <>
+                                            <span className="text-xl text-muted-foreground line-through">
+                                                ₹{course.originalPrice.toLocaleString()}
+                                            </span>
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 ml-2">
+                                                {Math.round((1 - course.price / course.originalPrice) * 100)}% OFF
+                                            </span>
+                                        </>
+                                    )}
                                 </div>
 
                                 {course.emiAvailable && (
@@ -124,15 +152,28 @@ export default function CourseDetailContent({ course }: CourseDetailContentProps
                                     </div>
                                 )}
 
-                                <Link href={`/checkout/course/${course.id}`} className="block w-full mb-3">
-                                    <Button className="w-full h-12 text-lg font-bold">
-                                        Enroll Now
-                                    </Button>
-                                </Link>
+                                {isEnrolled ? (
+                                    <Link href="/student/dashboard" className="block w-full mb-3">
+                                        <Button className="w-full h-12 text-lg font-bold bg-green-600 hover:bg-green-700">
+                                            Go to Dashboard
+                                        </Button>
+                                    </Link>
+                                ) : (
+                                    <Link href={`/checkout/course/${course.id}`} className="block w-full mb-3">
+                                        <Button
+                                            className="w-full h-12 text-lg font-bold"
+                                            disabled={isChecking}
+                                        >
+                                            {isChecking ? 'Checking...' : 'Enroll Now'}
+                                        </Button>
+                                    </Link>
+                                )}
 
-                                <Button variant="outline" className="w-full mb-6 h-12 font-medium">
-                                    Book Free Demo
-                                </Button>
+                                {!isEnrolled && (
+                                    <Button variant="outline" className="w-full mb-6 h-12 font-medium">
+                                        Book Free Demo
+                                    </Button>
+                                )}
 
                                 <div className="space-y-4 text-sm">
                                     <div className="flex items-center gap-3">

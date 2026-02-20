@@ -150,14 +150,14 @@ export function SchoolDetailsSheet({ school, open, onOpenChange, onEdit, onAcces
                         <Card>
                             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                                 <Users className="h-6 w-6 text-blue-500 mb-1" />
-                                <span className="text-lg font-bold">{school.totalStudents}</span>
+                                <span className="text-lg font-bold">{school.totalStudents ?? 0}</span>
                                 <span className="text-[10px] text-muted-foreground">Students</span>
                             </CardContent>
                         </Card>
                         <Card>
                             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                                 <Shield className="h-6 w-6 text-purple-500 mb-1" />
-                                <span className="text-lg font-bold">{Math.floor(school.totalStudents / 30)}</span>
+                                <span className="text-lg font-bold">{Math.floor((school.totalStudents || 0) / 30)}</span>
                                 <span className="text-[10px] text-muted-foreground">Teachers</span>
                             </CardContent>
                         </Card>
@@ -203,7 +203,7 @@ export function SchoolDetailsSheet({ school, open, onOpenChange, onEdit, onAcces
                             </div>
                             <div>
                                 <span className="text-muted-foreground block text-xs">Expires On</span>
-                                <span className="font-medium block mt-1">{format(new Date(school.subscriptionExpiry), 'MMM d, yyyy')}</span>
+                                <span className="font-medium block mt-1">{school.subscriptionExpiry ? format(new Date(school.subscriptionExpiry), 'MMM d, yyyy') : 'N/A'}</span>
                             </div>
                             <div>
                                 <span className="text-muted-foreground block text-xs">School ID</span>

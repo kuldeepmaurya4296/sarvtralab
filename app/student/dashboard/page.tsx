@@ -5,7 +5,7 @@ import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import ProgressRing from '@/components/dashboard/ProgressRing';
 import { ChartCard, BarChartComponent } from '@/components/dashboard/Charts';
-import { getCoursesByIds } from '@/lib/actions/course.actions';
+import { getStudentDashboardStats } from '@/lib/actions/student.actions';
 import { getCertificateCount } from '@/lib/actions/certificate.actions';
 import { getCourseMaterials } from '@/lib/actions/material.actions';
 import Link from 'next/link';
@@ -53,26 +53,29 @@ export default function StudentDashboardPage() {
 
             setIsLoadingData(true);
             try {
-                // 1. Fetch Enrolled Courses
-                // user.enrolledCourses might be undefined if not typed, but valid if it exists on user object
-                const enrolledIds = (user as any).enrolledCourses || [];
-                const courses = await getCoursesByIds(enrolledIds);
-                setEnrolledCourses(courses);
+                // 1. Fetch Student Stats & Enrolled Courses
+                const data = await getStudentDashboardStats(user.id);
 
-                // 2. Fetch Certificates Count
-                const certCount = await getCertificateCount(user.id);
+                if (data) {
+                    setEnrolledCourses(data.enrolledCourses);
 
-                // 3. Update Stats
-                setStats(prev => ({
-                    ...prev,
-                    totalEnrolled: courses.length,
-                    certificatesCount: certCount
-                }));
+                    // 2. Fetch Certificates Count
+                    const certCount = await getCertificateCount(user.id);
 
-                // 4. Fetch Materials for first course if available
-                if (courses.length > 0) {
-                    const materials = await getCourseMaterials(courses[0].id);
-                    setRecentMaterials(materials.slice(0, 3)); // Top 3
+                    // 3. Update Stats
+                    setStats(prev => ({
+                        ...prev,
+                        totalEnrolled: data.totalEnrolled,
+                        certificatesCount: certCount,
+                        overallProgress: data.overallProgress,
+                        watchTime: data.watchTime
+                    }));
+
+                    // 4. Fetch Materials for first course if available
+                    if (data.enrolledCourses.length > 0) {
+                        const materials = await getCourseMaterials(data.enrolledCourses[0].id);
+                        setRecentMaterials(materials.slice(0, 3));
+                    }
                 }
 
             } catch (error) {

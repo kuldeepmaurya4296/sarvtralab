@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import { ChartCard, AreaChartComponent } from '@/components/dashboard/Charts';
+import { getSupportDashboardStats } from '@/lib/actions/support.actions';
 import { motion } from 'framer-motion';
 import {
     Headphones,
@@ -24,38 +25,44 @@ export default function HelpSupportDashboardPage() {
     const { user, isLoading: authLoading } = useAuth();
     const router = useRouter();
 
+    const [stats, setStats] = useState<any>(null);
+    const [isLoadingStats, setIsLoadingStats] = useState(true);
+
     useEffect(() => {
         if (!authLoading && (!user || user.role !== 'helpsupport')) {
             router.push('/login');
         }
+
+        const fetchStats = async () => {
+            const data = await getSupportDashboardStats();
+            setStats(data);
+            setIsLoadingStats(false);
+        };
+
+        if (user) {
+            fetchStats();
+        }
     }, [user, authLoading, router]);
 
-    if (authLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    if (authLoading || isLoadingStats) return <div className="min-h-screen flex items-center justify-center">Loading Dashboard...</div>;
     if (!user || user.role !== 'helpsupport') return null;
 
-    const stats = [
-        { title: 'Open Tickets', value: '12', icon: AlertCircle, change: '+3', changeType: 'negative' as const },
-        { title: 'In Progress', value: '8', icon: Clock, change: '+2', changeType: 'positive' as const },
-        { title: 'Resolved Today', value: '15', icon: CheckCircle, change: '+25%', changeType: 'positive' as const },
-        { title: 'Avg Response Time', value: '2.5h', icon: MessageSquare, change: '-15%', changeType: 'positive' as const },
+    const statCards = [
+        { title: 'Open Tickets', value: stats?.openTickets || '0', icon: AlertCircle, change: '+0', changeType: 'negative' as const },
+        { title: 'In Progress', value: stats?.inProgress || '0', icon: Clock, change: '+0', changeType: 'positive' as const },
+        { title: 'Resolved Today', value: stats?.resolvedToday || '0', icon: CheckCircle, change: '+0', changeType: 'positive' as const },
+        { title: 'Avg Response Time', value: stats?.avgResponseTime || '2.5h', icon: MessageSquare, change: '+0', changeType: 'positive' as const },
     ];
 
-    const recentTickets = [
-        { id: 'TKT-001', subject: 'Cannot access course materials', student: 'Arjun Patel', priority: 'high', status: 'open', time: '15 min ago' },
-        { id: 'TKT-002', subject: 'Video playback issue', student: 'Priya Sharma', priority: 'medium', status: 'in-progress', time: '45 min ago' },
-        { id: 'TKT-003', subject: 'Certificate not generated', student: 'Rahul Gupta', priority: 'high', status: 'open', time: '1 hour ago' },
-        { id: 'TKT-004', subject: 'Payment inquiry', student: 'Sneha Reddy', priority: 'low', status: 'in-progress', time: '2 hours ago' },
-        { id: 'TKT-005', subject: 'Login issues on mobile', student: 'Vikram Singh', priority: 'medium', status: 'open', time: '3 hours ago' },
-    ];
-
-    const ticketTrend = [
-        { name: 'Mon', tickets: 18, resolved: 15 },
-        { name: 'Tue', tickets: 22, resolved: 20 },
-        { name: 'Wed', tickets: 15, resolved: 16 },
-        { name: 'Thu', tickets: 20, resolved: 18 },
-        { name: 'Fri', tickets: 25, resolved: 22 },
-        { name: 'Sat', tickets: 10, resolved: 12 },
-        { name: 'Sun', tickets: 5, resolved: 8 },
+    const recentTickets = stats?.recentTickets || [];
+    const ticketTrend = stats?.ticketTrend?.length > 0 ? stats.ticketTrend : [
+        { name: 'Mon', tickets: 0, resolved: 0 },
+        { name: 'Tue', tickets: 0, resolved: 0 },
+        { name: 'Wed', tickets: 0, resolved: 0 },
+        { name: 'Thu', tickets: 0, resolved: 0 },
+        { name: 'Fri', tickets: 0, resolved: 0 },
+        { name: 'Sat', tickets: 0, resolved: 0 },
+        { name: 'Sun', tickets: 0, resolved: 0 },
     ];
 
     const getPriorityColor = (p: string) => {
@@ -80,7 +87,7 @@ export default function HelpSupportDashboardPage() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {stats.map((stat, idx) => (
+                    {statCards.map((stat: any, idx: number) => (
                         <motion.div
                             key={stat.title}
                             initial={{ opacity: 0, y: 20 }}
@@ -107,7 +114,7 @@ export default function HelpSupportDashboardPage() {
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                {recentTickets.map(ticket => (
+                                {recentTickets.map((ticket: any) => (
                                     <div key={ticket.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
                                         <div className="flex items-start gap-3 flex-1 min-w-0">
                                             <div className="mt-0.5">{getStatusIcon(ticket.status)}</div>

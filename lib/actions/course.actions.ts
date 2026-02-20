@@ -1,14 +1,13 @@
-
 'use server';
 
 import connectToDatabase from '@/lib/mongoose';
 import Course from '@/lib/models/Course';
 import { Course as CourseType } from '@/data/courses';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../auth';
+import { logActivity, sendNotification } from './activity.actions';
 
-const clean = (doc: any) => {
-    if (!doc) return null;
-    return JSON.parse(JSON.stringify(doc));
-}
+import { clean } from '@/lib/utils';
 
 export async function getAllCourses(): Promise<CourseType[]> {
     await connectToDatabase();
@@ -31,6 +30,11 @@ export async function getCoursesByIds(ids: string[]): Promise<CourseType[]> {
 }
 
 export async function createCourse(data: Partial<CourseType>): Promise<CourseType | null> {
+    const session = await getServerSession(authOptions);
+    const allowedRoles = ['school', 'teacher', 'superadmin', 'admin'];
+    if (!session || !allowedRoles.includes(session.user.role)) {
+        throw new Error("Unauthorized");
+    }
     await connectToDatabase();
     try {
         const id = `crs-${Date.now()}`;
@@ -39,6 +43,9 @@ export async function createCourse(data: Partial<CourseType>): Promise<CourseTyp
             id,
             createdAt: new Date().toISOString()
         });
+
+        await logActivity(session.user.id, 'COURSE_CREATE', `Created course: ${data.title} (${id})`);
+
         return clean(newCourse.toObject()) as CourseType;
     } catch (e) {
         console.error("Create Course Error:", e);
@@ -47,6 +54,11 @@ export async function createCourse(data: Partial<CourseType>): Promise<CourseTyp
 }
 
 export async function updateCourse(id: string, data: Partial<CourseType>): Promise<CourseType | null> {
+    const session = await getServerSession(authOptions);
+    const allowedRoles = ['school', 'teacher', 'superadmin', 'admin'];
+    if (!session || !allowedRoles.includes(session.user.role)) {
+        throw new Error("Unauthorized");
+    }
     await connectToDatabase();
     try {
         const updated = await Course.findOneAndUpdate(
@@ -54,6 +66,9 @@ export async function updateCourse(id: string, data: Partial<CourseType>): Promi
             { $set: data },
             { new: true }
         ).lean();
+
+        await logActivity(session.user.id, 'COURSE_UPDATE', `Updated course: ${id}`);
+
         return clean(updated) as CourseType | null;
     } catch (e) {
         console.error("Update Course Error:", e);
@@ -62,6 +77,11 @@ export async function updateCourse(id: string, data: Partial<CourseType>): Promi
 }
 
 export async function deleteCourse(id: string): Promise<boolean> {
+    const session = await getServerSession(authOptions);
+    const allowedRoles = ['school', 'teacher', 'superadmin', 'admin'];
+    if (!session || !allowedRoles.includes(session.user.role)) {
+        throw new Error("Unauthorized");
+    }
     await connectToDatabase();
     try {
         await Course.deleteOne({ id });

@@ -121,7 +121,7 @@ export function SchoolTable({ schools, onView, onEdit, onDelete, onAccess, onAna
                                 <TableCell>
                                     <div className="font-medium flex items-center gap-1">
                                         <GraduationCap className="h-3 w-3 text-muted-foreground" />
-                                        {school.totalStudents.toLocaleString()}
+                                        {school.totalStudents?.toLocaleString() ?? '0'}
                                     </div>
                                 </TableCell>
                                 <TableCell>

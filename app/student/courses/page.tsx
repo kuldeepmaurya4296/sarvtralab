@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { getStudentEnrolledCourses } from '@/lib/actions/student.actions';
 import { getCoursesByIds, getAllCourses } from '@/lib/actions/course.actions';
 
 export default function StudentCoursesPage() {
@@ -29,18 +30,15 @@ export default function StudentCoursesPage() {
         const fetchData = async () => {
             if (user && user.role === 'student') {
                 try {
-                    const student = user as any;
-
-                    // Fetch Enrolled
-                    const enrolled = await getCoursesByIds(student.enrolledCourses || []);
+                    // Fetch Enrolled via direct database query to avoid stale session data
+                    const enrolled = await getStudentEnrolledCourses(user.id);
                     setEnrolledCourses(enrolled.map(course => {
-                        // Mock progress logic identical to previous
-                        const totalModules = course.curriculum?.reduce((acc: number, mod: any) => acc + mod.lessons.length, 0) || 0;
-                        const completedModules = 0;
-                        const progress = totalModules > 0 ? (completedModules / totalModules) * 100 : 0;
+                        // Progress calculation logic
+                        const totalModules = course.curriculum?.reduce((acc: number, mod: any) => acc + (mod.lessons?.length || 0), 0) || 0;
+                        const progress = course.progress || 0;
 
                         let nextLessonName = "Start Course";
-                        if (course.curriculum?.length > 0 && course.curriculum[0].lessons.length > 0) {
+                        if (course.curriculum?.length > 0 && course.curriculum[0].lessons?.length > 0) {
                             nextLessonName = course.curriculum[0].lessons[0].title;
                         }
 
@@ -48,13 +46,14 @@ export default function StudentCoursesPage() {
                             ...course,
                             progress,
                             totalModules,
-                            completedModules,
+                            completedModules: course.completedLessons || 0,
                             nextLesson: nextLessonName,
-                            lastAccessed: 'Just now'
+                            lastAccessed: 'Recently'
                         };
                     }));
 
-                    // Fetch Completed
+                    // Fetch Completed via user document (less critical if stale as dashboard stats will be correct)
+                    const student = user as any;
                     const completed = await getCoursesByIds(student.completedCourses || []);
                     setCompletedCourses(completed.map(course => ({
                         ...course,

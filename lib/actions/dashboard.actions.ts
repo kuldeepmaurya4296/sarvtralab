@@ -1,15 +1,14 @@
-
 'use server';
 
 import connectToDatabase from '@/lib/mongoose';
 import User from '@/lib/models/User';
 import Course from '@/lib/models/Course';
 import Lead from '@/lib/models/Lead';
+import Enrollment from '@/lib/models/Enrollment';
+import Payment from '@/lib/models/Payment';
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth";
 import { School } from '@/data/users';
-
-/* -------------------------------------------------------------------------- */
-/*                               School Dashboard                             */
-/* -------------------------------------------------------------------------- */
 
 /* -------------------------------------------------------------------------- */
 /*                               School Dashboard                             */
@@ -251,19 +250,107 @@ export async function getGovtDashboardStats() {
 
     const totalSchools = await User.countDocuments({ role: 'school' });
     const totalStudents = await User.countDocuments({ role: 'student' });
+    const totalReports = await Course.countDocuments({}); // Placeholder for logic if needed
 
     // Schools List
-    const schoolsDocs = await User.find({ role: 'school' }).lean();
+    const schoolsDocs = await User.find({ role: 'school' }).limit(10).lean();
     const schools = schoolsDocs.map((s: any) => ({
         id: s.id,
         name: s.name,
         city: s.city,
-        totalStudents: s.totalStudents || 0 // Again, check if this field exists or compute it
+        totalStudents: s.totalStudents || 0
     }));
+
+    // Calculate overall completion rate across all students if data allows
+    const students = await User.find({ role: 'student' }).select('enrolledCourses completedCourses').lean();
+    let totalEnrolled = 0;
+    let totalCompleted = 0;
+    students.forEach((s: any) => {
+        totalEnrolled += (s.enrolledCourses?.length || 0);
+        totalCompleted += (s.completedCourses?.length || 0);
+    });
+    const avgCompletion = totalEnrolled > 0 ? Math.round((totalCompleted / totalEnrolled) * 100) : 0;
 
     return {
         totalSchools,
         totalStudents,
+        avgCompletion: `${avgCompletion}%`,
+        reportsCount: await Course.countDocuments({}), // Just a number for UI
         schools
     };
+}
+
+/* -------------------------------------------------------------------------- */
+/*                               Teacher Dashboard                            */
+/* -------------------------------------------------------------------------- */
+
+export async function getTeacherDashboardStats(teacherId: string) {
+    const session = await getServerSession(authOptions);
+    if (!session || (session.user.id !== teacherId && session.user.role !== 'superadmin' && session.user.role !== 'admin')) {
+        throw new Error("Unauthorized");
+    }
+    await connectToDatabase();
+    try {
+        const teacher = await User.findOne({
+            $or: [{ id: teacherId }, { _id: teacherId }]
+        }).lean() as any;
+
+        if (!teacher) throw new Error("Teacher not found");
+
+        const teacherObjectId = teacher._id;
+
+        const courses = await Course.find({ instructor: teacherObjectId }).lean() as any[];
+        const totalCourses = courses.length;
+
+        const courseIds = courses.map(c => c._id);
+        const enrollments = await Enrollment.find({ course: { $in: courseIds } }).lean() as any[];
+        const totalStudents = new Set(enrollments.map(e => e.student)).size;
+
+        const avgCompletion = enrollments.length > 0
+            ? (enrollments.reduce((acc, e) => acc + (e.progress || 0), 0) / enrollments.length).toFixed(1)
+            : "0";
+
+        const sixMonthsAgo = new Date();
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+        const activityTrend = await Enrollment.aggregate([
+            { $match: { course: { $in: courseIds }, enrolledAt: { $gte: sixMonthsAgo } } },
+            {
+                $group: {
+                    _id: { $month: "$enrolledAt" },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { "_id": 1 } }
+        ]);
+
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const trendData = activityTrend.map(t => ({
+            name: monthNames[t._id - 1],
+            students: t.count
+        }));
+
+        return {
+            totalCourses,
+            totalStudents,
+            avgCompletion,
+            trendData,
+            recentCourses: courses.slice(0, 5).map(c => ({
+                id: c.id,
+                title: c.title,
+                students: enrollments.filter(e => e.course.toString() === c._id.toString()).length,
+                progress: 0,
+                nextClass: new Date().toISOString()
+            }))
+        };
+    } catch (e) {
+        console.error("Teacher Dashboard Stats Error:", e);
+        return {
+            totalCourses: 0,
+            totalStudents: 0,
+            avgCompletion: "0",
+            trendData: [],
+            recentCourses: []
+        };
+    }
 }

@@ -65,8 +65,8 @@ export default function GovtDashboardPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <StatCard icon={Building} title="Schools Under Jurisdiction" value={totalSchools} color="primary" />
                     <StatCard icon={Users} title="Total Students" value={totalStudents.toLocaleString()} change="+320" changeType="positive" color="secondary" />
-                    <StatCard icon={TrendingUp} title="Avg Completion Rate" value="72%" color="success" />
-                    <StatCard icon={FileText} title="Reports Generated" value={24} color="accent" />
+                    <StatCard icon={TrendingUp} title="Avg Completion Rate" value={stats.avgCompletion} color="success" />
+                    <StatCard icon={FileText} title="Reports Generated" value={stats.reportsCount} color="accent" />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

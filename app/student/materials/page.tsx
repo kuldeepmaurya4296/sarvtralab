@@ -14,31 +14,44 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { materials, Material } from '@/data/materials';
-import { courses } from '@/data/courses';
-import { mockStudents } from '@/data/users';
+import { getMaterialsByCourseIds } from '@/lib/actions/material.actions';
+import { getCoursesByIds } from '@/lib/actions/course.actions';
 import { format } from 'date-fns';
+import { useAuth } from '@/context/AuthContext';
+import { useEffect } from 'react';
 
 export default function StudentMaterialsPage() {
-    // 1. Identify User (Simulating Auth)
-    const student = mockStudents.find(s => s.id === 'std-001'); // Default to Arjun Patel
+    const { user, isLoading: authLoading } = useAuth();
+    const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+    const [allMaterials, setAllMaterials] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    if (!student) return <div>Loading...</div>;
-
-    // 2. Get Enrolled Courses
-    const enrolledCourseIds = student.enrolledCourses;
-    const enrolledCourses = courses.filter(c => enrolledCourseIds.includes(c.id));
-
-    // 3. Filter Materials based on Enrolled Courses
-    const availableMaterials = materials.filter(m => enrolledCourseIds.includes(m.courseId));
-
-    // 4. Local State for UI Filters
+    // Filter states (moved up to follow Rules of Hooks)
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCourse, setSelectedCourse] = useState<string>('all');
     const [selectedType, setSelectedType] = useState<string>('all');
 
+    useEffect(() => {
+        const loadData = async () => {
+            if (user?.id) {
+                const enrolledIds = (user as any).enrolledCourses || [];
+                const [coursesData, materialsData] = await Promise.all([
+                    getCoursesByIds(enrolledIds),
+                    getMaterialsByCourseIds(enrolledIds)
+                ]);
+                setEnrolledCourses(coursesData);
+                setAllMaterials(materialsData);
+                setIsLoading(false);
+            }
+        };
+        if (user) loadData();
+    }, [user]);
+
+    if (authLoading || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading Materials...</div>;
+    if (!user) return null;
+
     // 5. Apply Filters
-    const filteredMaterials = availableMaterials.filter(material => {
+    const filteredMaterials = allMaterials.filter(material => {
         const matchesSearch = material.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             material.description?.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesCourse = selectedCourse === 'all' || material.courseId === selectedCourse;
@@ -48,7 +61,7 @@ export default function StudentMaterialsPage() {
     });
 
     const getCourseName = (courseId: string) => {
-        return courses.find(c => c.id === courseId)?.title || 'Unknown Course';
+        return enrolledCourses.find(c => c.id === courseId)?.title || 'Unknown Course';
     };
 
     const getTypeColor = (type: string) => {
@@ -62,7 +75,7 @@ export default function StudentMaterialsPage() {
     };
 
     return (
-        <DashboardLayout role="student" userName={student.name} userEmail={student.email}>
+        <DashboardLayout role="student" userName={user.name || ''} userEmail={user.email || ''}>
             <div className="space-y-6">
                 {/* Header */}
                 <motion.div

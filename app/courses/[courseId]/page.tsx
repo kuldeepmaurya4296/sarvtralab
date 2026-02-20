@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { courses } from '@/data/courses';
+import { getCourseById } from '@/lib/actions/course.actions';
 import CourseDetailContent from '@/components/courses/CourseDetailContent';
 import PublicLayout from '@/components/layout/PublicLayout';
 import Link from 'next/link';
@@ -14,7 +14,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { courseId } = await params;
-    const course = courses.find((c) => c.id === courseId);
+    const course = await getCourseById(courseId);
 
     if (!course) {
         return constructMetadata({
@@ -26,14 +26,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return constructMetadata({
         title: course.title,
         description: course.description,
-        // You can add course-specific image if available in data
-        keywords: [course.title, ...course.tags, 'Sarvtra Labs', 'Sarwatra Labs', 'Learning'],
+        keywords: [course.title, ...(course.tags || []), 'Sarvtra Labs', 'Sarwatra Labs', 'Learning'],
     });
 }
 
 export default async function CourseDetailPage({ params }: Props) {
     const { courseId } = await params;
-    const course = courses.find((c) => c.id === courseId);
+    const course = await getCourseById(courseId);
 
     if (!course) {
         return (
@@ -55,7 +54,7 @@ export default async function CourseDetailPage({ params }: Props) {
     return (
         <>
             <CourseSchema course={course} />
-            <CourseDetailContent course={course} />
+            <CourseDetailContent course={course as any} />
         </>
     );
 }

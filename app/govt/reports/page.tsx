@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     FileText,
     Download,
@@ -12,7 +12,7 @@ import {
     User
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockGovtOrgs } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -34,67 +34,44 @@ import {
 } from "@/components/ui/select";
 import { format } from 'date-fns';
 
-const mockReports = [
-    {
-        id: 'rpt-001',
-        name: 'Annual Enrollment Summary 2024',
-        type: 'Enrollment',
-        generatedBy: 'System',
-        generatedAt: '2025-01-15T10:00:00',
-        status: 'Ready',
-        size: '2.4 MB'
-    },
-    {
-        id: 'rpt-002',
-        name: 'Q4 2024 Performance Metrics',
-        type: 'Performance',
-        generatedBy: 'System',
-        generatedAt: '2025-01-05T09:30:00',
-        status: 'Ready',
-        size: '1.8 MB'
-    },
-    {
-        id: 'rpt-003',
-        name: 'District A Attendance Report - Dec 2024',
-        type: 'Attendance',
-        generatedBy: 'Admin User',
-        generatedAt: '2024-12-31T16:45:00',
-        status: 'Ready',
-        size: '3.1 MB'
-    },
-    {
-        id: 'rpt-004',
-        name: 'Teacher Effectiveness Assessment',
-        type: 'Assessment',
-        generatedBy: 'System',
-        generatedAt: '2024-12-20T11:15:00',
-        status: 'Processing',
-        size: '-'
-    },
-    {
-        id: 'rpt-005',
-        name: 'Infrastructure Audit - Q3',
-        type: 'Audit',
-        generatedBy: 'Admin User',
-        generatedAt: '2024-10-10T14:20:00',
-        status: 'Ready',
-        size: '5.2 MB'
-    }
-];
+import { getAllReports } from '@/lib/actions/report.actions';
+import { useNotifications } from '@/context/NotificationContext';
 
 export default function GovtReportsPage() {
-    const govtOrg = mockGovtOrgs[0];
+    const { user, isLoading: authLoading } = useAuth();
+    const [reports, setReports] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [typeFilter, setTypeFilter] = useState('all');
+    const [loading, setLoading] = useState(true);
 
-    const filteredReports = mockReports.filter(report => {
+    useEffect(() => {
+        if (user) {
+            loadReports();
+        }
+    }, [user]);
+
+    async function loadReports() {
+        try {
+            const data = await getAllReports();
+            setReports(data || []);
+        } catch (error) {
+            console.error("Load Reports Error:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    if (authLoading || loading) return <div className="min-h-screen flex items-center justify-center">Loading Reports Center...</div>;
+    if (!user || ((user.role as any) !== 'govt' && (user.role as any) !== 'superadmin' && (user.role as any) !== 'admin')) return null;
+
+    const filteredReports = reports.filter(report => {
         const matchesSearch = report.name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesType = typeFilter === 'all' || report.type === typeFilter;
         return matchesSearch && matchesType;
     });
 
     return (
-        <DashboardLayout role="govt" userName={govtOrg.name} userEmail={govtOrg.email}>
+        <DashboardLayout role="govt" userName={user.name} userEmail={user.email}>
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>

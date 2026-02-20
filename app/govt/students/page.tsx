@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { Search, Download, GraduationCap } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockGovtOrgs, mockSchools, mockStudents } from '@/data/users';
+import { getGovtStudentData } from '@/lib/actions/govt.actions';
+import { useAuth } from '@/context/AuthContext';
+import { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -15,11 +17,9 @@ import { GovtStudentViewSheet } from '@/components/govt/students/GovtStudentView
 import { GovtStudentContactDialog } from '@/components/govt/students/GovtStudentContactDialog';
 
 export default function GovtStudentsPage() {
-    const govtOrg = mockGovtOrgs[0];
-    const assignedSchoolIds = govtOrg.assignedSchools || [];
-    const myStudents = mockStudents.filter(student => assignedSchoolIds.includes(student.schoolId));
-    const grades = Array.from(new Set(myStudents.map(s => s.grade))).sort();
-    const schoolOptions = mockSchools.filter(s => assignedSchoolIds.includes(s.id));
+    const { user, isLoading: authLoading } = useAuth();
+    const [data, setData] = useState<{ govtOrg: any, schools: any[], students: any[] } | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [gradeFilter, setGradeFilter] = useState('all');
@@ -27,6 +27,21 @@ export default function GovtStudentsPage() {
     const [selectedStudent, setSelectedStudent] = useState<any>(null);
     const [isViewOpen, setIsViewOpen] = useState(false);
     const [isContactOpen, setIsContactOpen] = useState(false);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const res = await getGovtStudentData();
+            setData(res);
+            setIsLoading(false);
+        };
+        fetchData();
+    }, []);
+
+    if (authLoading || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading Govt Dashboard...</div>;
+    if (!data || !data.govtOrg) return null;
+
+    const { govtOrg, schools: schoolOptions, students: myStudents } = data;
+    const grades = Array.from(new Set(myStudents.map(s => s.grade))).sort();
 
     const filteredStudents = myStudents.filter(student => {
         const matchesSearch =

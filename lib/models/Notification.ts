@@ -1,26 +1,23 @@
+
 import mongoose, { Schema, Model, Document } from 'mongoose';
 
 export interface INotification extends Document {
-    recipient: mongoose.Types.ObjectId;
-    type: 'Info' | 'Warning' | 'Success' | 'Error';
+    userId: string; // usr-id
     title: string;
     message: string;
+    type: 'info' | 'success' | 'warning' | 'error';
     link?: string;
-    read: boolean;
+    isRead: boolean;
     createdAt: Date;
 }
 
 const NotificationSchema = new Schema<INotification>({
-    recipient: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    type: {
-        type: String,
-        enum: ['Info', 'Warning', 'Success', 'Error'],
-        default: 'Info'
-    },
+    userId: { type: String, required: true, index: true },
     title: { type: String, required: true },
     message: { type: String, required: true },
+    type: { type: String, enum: ['info', 'success', 'warning', 'error'], default: 'info' },
     link: { type: String },
-    read: { type: Boolean, default: false }
+    isRead: { type: Boolean, default: false }
 }, {
     timestamps: true
 });

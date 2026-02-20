@@ -5,13 +5,13 @@ const UserSchema = new Schema({
     id: { type: String, required: true, unique: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { type: String, required: true, enum: ['student', 'school', 'govt', 'superadmin', 'teacher', 'helpsupport'] },
+    role: { type: String, required: true, enum: ['student', 'school', 'govt', 'superadmin', 'teacher', 'helpsupport'], index: true },
     name: { type: String, required: true },
     avatar: { type: String },
     createdAt: { type: String, default: () => new Date().toISOString() },
 
     // Student fields
-    schoolId: String,
+    schoolId: { type: Schema.Types.ObjectId, ref: 'School', index: true },
     schoolName: {
         type: String,
         required: function () {

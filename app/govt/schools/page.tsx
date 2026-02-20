@@ -12,7 +12,9 @@ import {
     MoreVertical
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockGovtOrgs, mockSchools, School } from '@/data/users';
+import { getGovtStudentData } from '@/lib/actions/govt.actions';
+import { useAuth } from '@/context/AuthContext';
+import { useEffect } from 'react';
 import {
     Table,
     TableBody,
@@ -48,18 +50,27 @@ import {
 } from "@/components/ui/select";
 
 export default function GovtSchoolsPage() {
-    // Assuming the first govt org is the logged-in user for now
-    const govtOrg = mockGovtOrgs[0];
-
-    // Filter schools that are assigned to this govt org
-    // If assignedSchools is empty or undefined, show empty list, or if it contains IDs, filter by them.
-    // However, mockGovtOrgs[0] has specific assignedSchools.
-    const assignedSchoolIds = govtOrg.assignedSchools || [];
-    const mySchools = mockSchools.filter(school => assignedSchoolIds.includes(school.id));
+    const { user, isLoading: authLoading } = useAuth();
+    const [data, setData] = useState<{ govtOrg: any, schools: any[] } | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [typeFilter, setTypeFilter] = useState('all');
     const [boardFilter, setBoardFilter] = useState('all');
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const res = await getGovtStudentData();
+            setData(res);
+            setIsLoading(false);
+        };
+        fetchData();
+    }, []);
+
+    if (authLoading || isLoading) return <div className="min-h-screen flex items-center justify-center">Loading Managed Schools...</div>;
+    if (!data || !data.govtOrg) return null;
+
+    const { govtOrg, schools: mySchools } = data;
 
     // Filter logic
     const filteredSchools = mySchools.filter(school => {
@@ -93,7 +104,7 @@ export default function GovtSchoolsPage() {
     };
 
     return (
-        <DashboardLayout role="govt" userName={govtOrg.name} userEmail={govtOrg.email}>
+        <DashboardLayout role="govt" userName={govtOrg.name || ''} userEmail={govtOrg.email || ''}>
             <div className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -181,7 +192,7 @@ export default function GovtSchoolsPage() {
                                             </TableCell>
                                         </TableRow>
                                     ) : (
-                                        filteredSchools.map((school) => (
+                                        mySchools.map((school) => (
                                             <TableRow key={school.id}>
                                                 <TableCell>
                                                     <div className="flex flex-col">
@@ -213,7 +224,7 @@ export default function GovtSchoolsPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="font-medium">
-                                                        {school.totalStudents.toLocaleString()}
+                                                        {(school.totalStudents || 0).toLocaleString()}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
@@ -223,10 +234,10 @@ export default function GovtSchoolsPage() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <Badge
-                                                        variant={getStatusColor(school.subscriptionExpiry) === 'destructive' ? 'destructive' : 'default'}
-                                                        className={getStatusColor(school.subscriptionExpiry) === 'success' ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}
+                                                        variant={getStatusColor(school.subscriptionExpiry || new Date().toISOString()) === 'destructive' ? 'destructive' : 'default'}
+                                                        className={getStatusColor(school.subscriptionExpiry || new Date().toISOString()) === 'success' ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}
                                                     >
-                                                        {getStatusLabel(school.subscriptionExpiry)}
+                                                        {getStatusLabel(school.subscriptionExpiry || new Date().toISOString())}
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="text-right">

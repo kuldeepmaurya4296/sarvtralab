@@ -11,7 +11,7 @@ import {
     Image as ImageIcon
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import { mockSchools } from '@/data/users';
+import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,7 +21,12 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 
 export default function SchoolSettingsPage() {
-    const school = mockSchools[0];
+    const { user, isLoading: authLoading } = useAuth();
+
+    if (authLoading) return <div className="min-h-screen flex items-center justify-center">Loading Settings...</div>;
+    if (!user || user.role !== 'school') return null;
+
+    const school = user;
 
     return (
         <DashboardLayout role="school" userName={school.name} userEmail={school.email}>
@@ -60,11 +65,11 @@ export default function SchoolSettingsPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="schoolCode">School Code</Label>
-                                        <Input id="schoolCode" defaultValue={school.schoolCode} disabled />
+                                        <Input id="schoolCode" defaultValue={(school as any).schoolCode || 'N/A'} disabled />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="principal">Principal Name</Label>
-                                        <Input id="principal" defaultValue={school.principalName} />
+                                        <Input id="principal" defaultValue={(school as any).principalName || ''} />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="email">Email</Label>
@@ -72,11 +77,11 @@ export default function SchoolSettingsPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="phone">Phone</Label>
-                                        <Input id="phone" defaultValue={school.phone} />
+                                        <Input id="phone" defaultValue={(school as any).phone || ''} />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="city">City</Label>
-                                        <Input id="city" defaultValue={school.city} />
+                                        <Input id="city" defaultValue={(school as any).city || ''} />
                                     </div>
                                     <div className="space-y-2 col-span-2">
                                         <Label htmlFor="address">Address</Label>
